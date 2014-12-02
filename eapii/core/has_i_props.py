@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 #------------------------------------------------------------------------------
 # Copyright 2014 by Eapii Authors, see AUTHORS for more details.
+#
 # Distributed under the terms of the Modified BSD License.
 #
-# The full license is in the file COPYING.txt, distributed with this software.
+# The full license is in the file LICENCE, distributed with this software.
 #------------------------------------------------------------------------------
-
 """ HasIProp is the most basic object in Eapii.
 
 It handles the use of IProperty, Subsystem, and Channel and the possibility
@@ -28,7 +28,7 @@ PRE_SET_PREFIX = 'pre_set_'
 SET_PREFIX = '_set_'
 POST_SET_PREFIX = '_post_set_'
 
-CUSTOMIZABLE = ((POST_GET_PREFIX, 'get'), (GET_PREFIX, 'get'),
+CUSTOMIZABLE = ((POST_GET_PREFIX, 'post_get'), (GET_PREFIX, 'get'),
                 (PRE_SET_PREFIX, 'pre_set'), (SET_PREFIX, 'set'),
                 (POST_SET_PREFIX, 'post_set'))
 
@@ -249,6 +249,23 @@ class HasIProp(with_metaclass(HasIPropsMeta, object)):
         if self.__channels__:
             self._channel_cache = {ch: {} for ch in self.__channels__}
 
+    def get_iprop(self, name):
+        """ Acces the iprop matching the given name.
+
+        Parameters
+        ----------
+        name : unicode
+            Name of the IProperty to be retrieved
+
+        Returns
+        -------
+        iprop : IProperty
+            Matching IProperty object
+
+        """
+        return getattr(self.__class__, name)
+
+    # TODO implement
     def get_range(self, range_id):
         """ Access the range object matching the definition.
 
@@ -269,6 +286,7 @@ class HasIProp(with_metaclass(HasIPropsMeta, object)):
         """
         pass
 
+    # TODO implement
     def discard_range(self, range_id):
         """ Remove a range from the cache.
 
@@ -284,6 +302,11 @@ class HasIProp(with_metaclass(HasIPropsMeta, object)):
 
         """
         pass
+
+    # TODO support for IPropertyProxy by overriding at runtime for the instance
+    # defining a custom behaviour __getattribute__ so that we go through the
+    # proxy if necessary. Proxies can simply be stored in a dictionary as they
+    # are on the instance weak values are not necessary.
 
     def clear_cache(self, properties=None):
         """ Clear the cache of all the properties or only of the specified
@@ -335,6 +358,77 @@ class HasIProp(with_metaclass(HasIPropsMeta, object)):
             cache = self._cache.copy()
 
         return cache
+
+    def reopen_connection(self):
+        """Reopen the connection to the instrument.
+
+        """
+        message = fill(cleandoc(
+            '''This method is used to reopen a connection whose state
+            is suspect, for example the last message sent did not
+            go through, and should be implemented by classes
+            subclassing HasIProps'''),
+            80)
+        raise NotImplementedError(message)
+
+    def default_get_iproperty(self, cmd, *args, **kwargs):
+        """Method used by default by the IProperty to retrieve a value from an
+        instrument.
+
+        Parameters
+        ----------
+        cmd :
+            Command used by the implementation to determine what should be done
+            to get the answer from the instrument.
+        *args :
+            Additional arguments necessary to retrieve the instrument state.
+        **kwargs :
+            Additional keywords arguments necessary to retrieve the instrument
+            state.
+
+        """
+        mess = fill(cleandoc('''Method used by default by the IProperty to
+            retrieve a value from an instrument. Should be implemented by
+            classes subclassing HasIProps.'''), 80)
+        raise NotImplementedError(mess)
+
+    def default_set_iproperty(self, cmd, *args, **kwargs):
+        """Method used by default by the IProperty to set an instrument value.
+
+        Parameters
+        ----------
+        cmd :
+            Command used by the implementation to determine what should be done
+            to set the instrument state.
+        *args :
+            Additional arguments necessary to retrieve the instrument state.
+        **kwargs :
+            Additional keywords arguments necessary to retrieve the instrument
+            state.
+
+        """
+        mess = fill(cleandoc('''Method used by default by the IProperty to
+            set an instrument value. Should be implemented by
+            classes subclassing HasIProps.'''), 80)
+        raise NotImplementedError(mess)
+
+    def default_check_instr_operation(self):
+        """Method used by default by the IProperty to check the instrument
+        operation.
+
+        Returns
+        -------
+        result : bool
+            Is everything ok ? Can we assume that the last operation succeeded.
+        precision :
+            Any precision about the situation, this can be any object but
+            something should always be returned.
+
+        """
+        mess = fill(cleandoc('''Method used by default by the IProperty to
+            check the instrument operation. Should be implemented by
+            classes subclassing HasIProps.'''), 80)
+        raise NotImplementedError(mess)
 
     def _generic_get_channel(self, name, ch_cls, ch_id):
         """ Generic implementation of the channel getter.
