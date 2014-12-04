@@ -13,7 +13,7 @@ from __future__ import (division, unicode_literals, print_function,
                         absolute_import)
 from future.utils import with_metaclass
 
-from .has_i_props import HasIPropsMeta, HasIProps
+from .has_i_props import HasIPropsMeta, HasIProps, AbstractSubSystem
 
 
 class DeclarationMeta(HasIPropsMeta):
@@ -58,7 +58,7 @@ class SubSystem(with_metaclass(DeclarationMeta, HasIProps)):
         """
         return self.parent.default_get_iproperty(cmd, *args, **kwargs)
 
-    def default_set_iproperty(self, cmd):
+    def default_set_iproperty(self, cmd, *args, **kwargs):
         """Subsystems simply pipes the call to their parent.
 
         """
@@ -69,3 +69,5 @@ class SubSystem(with_metaclass(DeclarationMeta, HasIProps)):
 
         """
         return self.parent.default_check_instr_operation()
+
+AbstractSubSystem.register(SubSystem)

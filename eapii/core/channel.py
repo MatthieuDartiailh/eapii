@@ -13,6 +13,7 @@ behaviour.
 from __future__ import (division, unicode_literals, print_function,
                         absolute_import)
 
+from .has_i_props import AbstractChannel
 from .subsystem import SubSystem
 
 
@@ -53,7 +54,7 @@ class Channel(SubSystem):
         kwargs['ch_id'] = self.id
         return self.parent.default_get_iproperty(cmd, *args, **kwargs)
 
-    def default_set_iproperty(self, cmd):
+    def default_set_iproperty(self, cmd, *args, **kwargs):
         """Channels simply pipes the call to their parent.
 
         """
@@ -65,3 +66,5 @@ class Channel(SubSystem):
 
         """
         return self.parent.default_check_instr_operation()
+
+AbstractChannel.register(Channel)

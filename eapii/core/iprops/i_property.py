@@ -11,15 +11,17 @@
 """
 from __future__ import (division, unicode_literals, print_function,
                         absolute_import)
-from contextlib import contextmanager
 from types import MethodType
+from copy import copy
 
-from ..errors.api import InstrIOError
+from ..errors import InstrIOError
 
 
-class IProperty(object):
+class IProperty(property):
     """Descriptor representing the most basic instrument property.
 
+    IProperties should not be used outside the definition of a class to avoid
+    weird behaviour when some methods are customized.
     IProperty are not meant to be used when writing a driver as it is a bit
     bare, one should rather use the more specialised found in other modules
     of the iprops package.
@@ -29,27 +31,34 @@ class IProperty(object):
     getter : optional
         Object used to access the instrument property value through the use
         of the driver. If absent the IProperty will be considered write only.
-        This is typically a string.
+        This is typically a string. If the default get behaviour is overwritten
+        True should be passed to mark the property as readable.
     setter : optional
         Object used to set the instrument property value through the use
         of the driver. If absent the IProperty will be considered read-only.
-        This is typically a string.
+        This is typically a string. If the default set behaviour is overwritten
+        True should be passed to mark the property as settable.
     secure_comm : int, optional
         Whether or not a failed communication should result in a new attempt
         to communicate after re-opening the communication. The value is used to
         determine how many times to retry.
 
+    Parameters
+    ----------
+    name : unicode
+        Name of the IProperty. This is set by the HasIProps instance and
+        should not be manipulated by user code.
+
     """
     def __init__(self, getter=None, setter=None, secure_comm=0):
-        self._get = getter
-        self._set = setter
+        self._getter = getter
+        self._setter = setter
         self._secur = secure_comm
 
-        if getter:
-            self.__get__ = self._get
+        super(IProperty, self).__init__(fget=self._get if getter else None,
+                                        fset=self._set if setter else None)
 
-        if setter:
-            self.__set__ = self._set
+        self.name = ''
 
     def get(self, instance):
         """Acces the parent driver to retrieve the state of the instrument.
@@ -70,11 +79,7 @@ class IProperty(object):
             necessary it should be done in the post_get method.
 
         """
-        if self._secur:
-            with self.secure_communication(instance):
-                return instance.default_get_iproperty(self.getter)
-        else:
-            return instance.default_get_iproperty(self.getter)
+        return instance.default_get_iproperty(self._getter)
 
     def post_get(self, instance, value):
         """Hook to alter the value returned by the underlying driver.
@@ -138,7 +143,7 @@ class IProperty(object):
             Object to pass to the driver method to set the value.
 
         """
-        instance.default_set_iproperty(self.setter, value)
+        instance.default_set_iproperty(self._setter, value)
 
     def post_set(self, instance, value, i_value):
         """Hook to perform additional action after setting a value.
@@ -168,52 +173,62 @@ class IProperty(object):
             mess = 'The instrument did not succeeded to set {} to {} ({}).'
             raise InstrIOError(mess.format(self._name, value, i_value))
 
-    @contextmanager
-    def secure_communication(self, instance):
-        """Make sure a communication issue cannot simply be resolved by
-        re-opening the communication.
-
-        Parameters
-        ----------
-        instance : HasIProps
-             Instrument or SubSystem object on which this IProperty is defined.
+    def clone(self):
+        """Clone the IProperty by copying all the local attributes and instance
+        methods
 
         """
+        p = self.__class__(self._getter, self._setter, self._secur)
+
+        for k, v in self.__dict__.items():
+            if isinstance(v, MethodType):
+                setattr(p, k, MethodType(v.__func__, p))
+            else:
+                setattr(p, k, v)
+
+        return p
+
+    def _get(self, instance):
+        """Getter defined when the user provides a value for the get arg.
+
+        """
+        if self.name in instance._cache:
+            return instance._cache[self.name]
+
         i = -1
         while i < self._secur:
             try:
                 i += 1
-                yield
-            except instance.secure_comm_exceptions as e:
+                val = self.get(instance)
+            except instance.secure_com_exceptions as e:
                 if i != self._secur:
                     instance.reopen_connection()
                     continue
                 else:
                     raise
-
-    def set_name(self, name):
-        """Set the name of the IProp used in errors messages.
-
-        """
-        self._name = name
-
-    def _get(self, instance, type=None):
-        """Getter defined when the user provides a value for the get arg.
-
-        """
-        if not type:
-            return self
-
-        with self.secure_communication(instance):
-            val = self.get(instance)
         alt_val = self.post_get(instance, val)
-        return val
+        instance._cache[self.name] = alt_val
+        return alt_val
 
     def _set(self, instance, value):
         """Setter defined when the user provides a value for the set arg.
 
         """
+        cache = instance._cache
+        if self.name in cache and value == cache[self.name]:
+            return
+
         i_val = self.pre_set(instance, value)
-        with self.secure_communication(instance):
-            self.set(instance, i_val)
-        self.post_set(instance, value, i_value)
+        i = -1
+        while i < self._secur:
+            try:
+                i += 1
+                val = self.set(instance, i_val)
+            except instance.secure_com_exceptions as e:
+                if i != self._secur:
+                    instance.reopen_connection()
+                    continue
+                else:
+                    raise
+        self.post_set(instance, value, i_val)
+        cache[self.name] = value

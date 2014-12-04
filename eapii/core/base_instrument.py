@@ -14,7 +14,10 @@ from __future__ import (division, unicode_literals, print_function,
 from future.utils import with_metaclass
 from threading import RLock
 from weakref import WeakValueDictionary
+from textwrap import fill
+from inspect import cleandoc
 
+from .errors import InstrIOError
 from .has_i_props import HasIPropsMeta, HasIProps
 
 
@@ -27,11 +30,11 @@ class InstrumentSigleton(HasIPropsMeta):
                  caching_permissions={}, auto_open=True):
         # This is done on first call rather than init to avoid useless memory
         # allocation.
-        if not hasattr(self, _instances_cache):
+        if not hasattr(self, '_instances_cache'):
             self._instances_cache = WeakValueDictionary()
 
         cache = self._instances_cache
-        driver_id = set(connection_infos.items())
+        driver_id = frozenset(connection_infos.items())
         if driver_id not in cache:
             dr = super(InstrumentSigleton, self).__call__(connection_infos,
                                                           caching_alowed,
@@ -39,8 +42,11 @@ class InstrumentSigleton(HasIPropsMeta):
                                                           auto_open)
 
             cache[driver_id] = dr
+        else:
+            dr = cache[driver_id]
+            dr.newly_created = False
 
-        return cache[driver_id]
+        return dr
 
 
 class BaseInstrument(with_metaclass(InstrumentSigleton, HasIProps)):
@@ -67,22 +73,21 @@ class BaseInstrument(with_metaclass(InstrumentSigleton, HasIProps)):
         Whether to automatically open the connection to the instrument when the
         driver is instantiated.
 
+    Attributes
+    ----------
+    secure_com_except : tuple
+# TODO complete
+
     """
     secure_com_except = (InstrIOError)
 
     def __init__(self, connection_info, caching_allowed=True,
                  caching_permissions={}, auto_open=True):
-        super(BaseInstrument, self).__init__()
-        if caching_allowed:
-            # Avoid overriding class attribute
-            perms = self.caching_permissions.copy()
-            perms.update(caching_permissions)
-            self._caching_permissions = set([key for key in perms
-                                             if perms[key]])
-        else:
-            self._caching_permissions = set()
+        super(BaseInstrument, self).__init__(caching_allowed,
+                                             caching_permissions)
 
         self.owner = ''
+        self.newly_created = True
         self.lock = RLock()
 
     def open_connection(self):
@@ -119,6 +124,7 @@ class BaseInstrument(with_metaclass(InstrumentSigleton, HasIProps)):
             80)
         raise NotImplementedError(message)
 
+    @property
     def connected(self):
         """Return whether or not commands can be sent to the instrument.
 
