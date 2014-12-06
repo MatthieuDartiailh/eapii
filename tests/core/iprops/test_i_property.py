@@ -7,9 +7,8 @@
 #------------------------------------------------------------------------------
 from __future__ import (division, unicode_literals, print_function,
                         absolute_import)
-from nose.tools import (assert_equal, assert_true, assert_raises,
-                        assert_not_equal, assert_is_not)
 from types import MethodType
+from threading import RLock
 
 from eapii.core.iprops.i_property import IProperty
 
@@ -20,6 +19,8 @@ class FalseDriver(object):
 
     def __init__(self):
         self._cache = {}
+        self.lock = RLock()
+        self._caching_permissions = set()
 
     def reopen_connection(self):
         pass
@@ -33,6 +34,7 @@ class TestGettingChain(object):
     """
     def setup(self):
         p = IProperty()
+        p.name = 'test'
 
         def getter(self, obj):
             return 'Test'
@@ -41,14 +43,14 @@ class TestGettingChain(object):
         self.p = p
 
     def test_default_post_get(self):
-        assert_equal(self.p._get(FalseDriver()), 'Test')
+        assert self.p._get(FalseDriver()) == 'Test'
 
     def test_overriding_post_get(self):
         def post_getter(self, obj, val):
             return '<br>'+val+'<br>'
 
         self.p.post_get = MethodType(post_getter, self.p)
-        assert_equal(self.p._get(FalseDriver()), '<br>Test<br>')
+        assert self.p._get(FalseDriver()) == '<br>Test<br>'
 
     def test_caching(self):
         p = self.p
@@ -62,10 +64,11 @@ class TestGettingChain(object):
         d = FalseDriver()
         d.i = 0
 
-        assert_equal(p._get(d), 1)
-        assert_equal(p._get(d), 1)
-        d._cache = {}
-        assert_equal(p._get(d), 2)
+        assert p._get(d) == 1
+        assert p._get(d) == 2
+        d._caching_permissions = set(['test'])
+        assert p._get(d) == 3
+        assert p._get(d) == 3
 
     def test_secur_comm_0(self):
         self.p.call = 0
@@ -82,7 +85,7 @@ class TestGettingChain(object):
             self.p._get(d)
         except ValueError:
             pass
-        assert_equal(self.p.call, 1)
+        assert self.p.call == 1
 
     def test_secur_comm_2(self):
         self.p.call = 0
@@ -100,7 +103,7 @@ class TestGettingChain(object):
             self.p._get(d)
         except ValueError:
             pass
-        assert_equal(self.p.call, 2)
+        assert self.p.call == 2
 
 
 class TestSettingChain(object):
@@ -108,6 +111,7 @@ class TestSettingChain(object):
     """
     def setup(self):
         p = IProperty()
+        p.name = 'test'
 
         def setter(self, obj, value):
             self.val = value
@@ -117,7 +121,7 @@ class TestSettingChain(object):
 
     def test_default_set_chain(self):
         self.p._set(FalseDriver(), 1)
-        assert_equal(self.p.val, 1)
+        assert self.p.val == 1
 
     def test_overriding_pre_set(self):
         def pre_setter(self, obj, value):
@@ -125,7 +129,7 @@ class TestSettingChain(object):
 
         self.p.pre_set = MethodType(pre_setter, self.p)
         self.p._set(FalseDriver(), 1)
-        assert_equal(self.p.val, 0.5)
+        assert self.p.val == 0.5
 
     def test_overriding_post_set(self):
         def pre_setter(self, obj, value):
@@ -137,7 +141,7 @@ class TestSettingChain(object):
         self.p.pre_set = MethodType(pre_setter, self.p)
         self.p.post_set = MethodType(post_setter, self.p)
         self.p._set(FalseDriver(), 1)
-        assert_equal(self.p.val, (1, 0.5))
+        assert self.p.val == (1, 0.5)
 
     def test_caching(self):
         self.p.call = 0
@@ -150,7 +154,12 @@ class TestSettingChain(object):
         d = FalseDriver()
         self.p._set(d, 1)
         self.p._set(d, 1)
-        assert_equal(self.p.call, 1)
+        assert self.p.call == 2
+        d._caching_permissions = set(['test'])
+
+        self.p._set(d, 1)
+        self.p._set(d, 1)
+        assert self.p.call == 3
 
     def test_secur_comm_0(self):
         self.p.call = 0
@@ -167,7 +176,7 @@ class TestSettingChain(object):
             self.p._set(d, 1)
         except ValueError:
             pass
-        assert_equal(self.p.call, 1)
+        assert self.p.call == 1
 
     def test_secur_comm_2(self):
         self.p.call = 0
@@ -185,7 +194,7 @@ class TestSettingChain(object):
             self.p._set(d, 1)
         except ValueError:
             pass
-        assert_equal(self.p.call, 2)
+        assert self.p.call == 2
 
 
 def test_cloning():
@@ -196,9 +205,11 @@ def test_cloning():
     m = MethodType(aux, p)
     p.get = m
     p.val = 1
+    p.__doc__ = 'test'
 
     p2 = p.clone()
-    assert_is_not(p2, p)
-    assert_equal(p2.val, 1)
-    assert_equal(p2.get.__func__, aux)
-    assert_not_equal(p2.get(None), p.get(None))
+    assert p2 is not p
+    assert p2.val == 1
+    assert p2.get.__func__ == aux
+    assert p2.get(None) != p.get(None)
+    assert p2.__doc__ == p.__doc__

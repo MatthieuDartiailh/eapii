@@ -18,12 +18,13 @@ from future.utils import with_metaclass, bind_method
 from inspect import getmembers
 from types import FunctionType, MethodType
 from functools import update_wrapper
-from inspect import cleandoc
+from inspect import cleandoc, getsourcelines
 from textwrap import fill
 from abc import ABCMeta
 from collections import defaultdict
 
 from .iprops.i_property import IProperty
+from .iprops.proxies import make_proxy
 
 # Prefixes for IProperty specially named methods.
 POST_GET_PREFIX = '_post_get_'
@@ -167,6 +168,20 @@ class HasIPropsMeta(type):
                 elif key.startswith(SET_PREFIX):
                     cust_iprops['set'].append(key)
 
+        # Analyse the source code to find the doc for the defined IProperties.
+        if iprops:
+            lines, _ = getsourcelines(cls)
+            doc = ''
+            for line in lines:
+                l = line.strip()
+                if l.startswith('#:'):
+                    doc += ' ' + l[2:].strip()
+                elif ' = ' in l:
+                    name = l.split(' = ', 1)[0]
+                    if name in iprops:
+                        iprops[name].__doc__ = fill(doc.strip(), 79)
+                        doc = ''
+
         # Walk the mro of the class, excluding itself, in reverse order
         # collecting all of the iprops into a single dict. The reverse
         # update preserves the mro of overridden iprops.
@@ -240,6 +255,7 @@ class HasIProps(with_metaclass(HasIPropsMeta, object)):
 
         self._cache = {}
         self._range_cache = {}
+        self._proxies = {}
 
         subsystems = self.__subsystems__
         channels = self.__channels__
@@ -333,10 +349,78 @@ class HasIProps(with_metaclass(HasIPropsMeta, object)):
         """
         pass
 
-    # TODO support for IPropertyProxy by overriding at runtime for the instance
-    # defining a custom behaviour __getattribute__ so that we go through the
-    # proxy if necessary. Proxies can simply be stored in a dictionary as they
-    # are on the instance weak values are not necessary.
+    def patch_iprop(self, iprop, **kwargs):
+        """Modify the behaviour of an iproperty for the current instance.
+
+        This is achieved by creating a proxy on the IProperty linked to that
+        instance. NB : when overriding a method the function used should take
+        as first argument the iprop and as second th HasIProps object, no
+        automatic wrapping is performed.
+
+        Parameters
+        ----------
+        iprop : unicode
+            Name of the IProperty whose behaviour should be overridden.
+        **kwargs :
+            Attributes of the IProperty to override in the proxy.
+
+        """
+        if not hasattr(self, '_proxied'):
+            self._proxied = []
+
+        i_p = getattr(type(self), iprop)
+        if self not in i_p._proxies:
+            make_proxy(i_p, self, kwargs)
+            self._proxied.append(i_p)
+
+        else:
+            proxy = i_p._proxies[self]
+            proxy.patch(kwargs)
+
+    def unpatch_iprop(self, iprop, *args):
+        """Restore the behaviour of an IProperty to its default.
+
+        This is achieved by replacing the attributes by the ones of the proxy.
+        If the proxy comes back to the iprop behaviour it is discarded.
+
+        Parameters
+        ----------
+        iprop : unicode
+            Name of the IProperty whose behaviour should be overridden.
+        *args : optional
+            Names of the attributes which should be restored. If omitted the
+            proxy will be removed.
+
+        Raises
+        ------
+        KeyError :
+            If no proxy exists for the given IProp.
+
+        """
+        i_p = getattr(type(self), iprop)
+        if self not in i_p._proxies:
+            raise KeyError('No proxy found for {}'.format(iprop))
+
+        if not args:
+            del i_p._proxies[self]
+            self._proxied.remove(i_p)
+        else:
+            proxy = i_p._proxies[self]
+            proxy.unpatch(args)
+            if proxy.obsolete:
+                del i_p._proxies[self]
+                self._proxied.remove(i_p)
+
+    def unpatch_all(self):
+        """Restore all IProperties behaviour to their default one.
+
+        The class overidden behaviour are of course preserved.
+
+        """
+        for iprop in self._proxied:
+            del iprop._proxies[self]
+
+        self._proxied = []
 
     def clear_cache(self, subsystems=True, channels=True, properties=None):
         """ Clear the cache of all the properties or only of the specified

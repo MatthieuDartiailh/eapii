@@ -11,19 +11,24 @@
 """
 from __future__ import (division, unicode_literals, print_function,
                         absolute_import)
-from nose.tools import (assert_equal, assert_true, assert_raises,
-                        assert_is_instance, assert_false, assert_is,
-                        assert_is_not)
+from threading import RLock
+from pytest import raises
 
 from eapii.core.has_i_props import HasIProps
 from eapii.core.subsystem import SubSystem
 from eapii.core.channel import Channel
 from eapii.core.iprops.i_property import IProperty
+from eapii.core.iprops.proxies import _ProxyManager
 
 
 class HasIPropsTester(HasIProps):
     """
     """
+    def __init__(self, caching_allowed=True, caching_permissions={}):
+        super(HasIPropsTester, self).__init__(caching_allowed,
+                                              caching_permissions)
+        self.lock = RLock()
+
     def reopen_connection(self):
         pass
 
@@ -31,13 +36,25 @@ class HasIPropsTester(HasIProps):
         return True, None
 
 
+def test_documenting_i_prop():
+
+    class DocTester(HasIPropsTester):
+
+        #: This is the docstring for
+        #: the IProperty test.
+        test = IProperty()
+
+    assert DocTester.test.__doc__ ==\
+        'This is the docstring for the IProperty test.'
+
+
 def test_overriding_get():
 
     class NoOverrideGet(HasIPropsTester):
         test = IProperty(getter=True)
 
-    assert_raises(NotImplementedError,
-                  lambda: getattr(NoOverrideGet(), 'test'))
+    with raises(NotImplementedError):
+        NoOverrideGet().test
 
     class OverrideGet(HasIPropsTester):
         test = IProperty(getter=True)
@@ -45,7 +62,7 @@ def test_overriding_get():
         def _get_test(self, iprop):
             return 'This is a test'
 
-    assert_equal(OverrideGet().test, 'This is a test')
+    assert OverrideGet().test == 'This is a test'
 
 
 def test_overriding_post_get():
@@ -59,7 +76,7 @@ def test_overriding_post_get():
         def _post_get_test(self, iprop, val):
             return '<br>'+val+'<br>'
 
-    assert_equal(OverridePostGet().test, '<br>this is a test<br>')
+    assert OverridePostGet().test == '<br>this is a test<br>'
 
 
 def test_overriding_set():
@@ -67,8 +84,8 @@ def test_overriding_set():
     class NoOverrideSet(HasIPropsTester):
         test = IProperty(setter=True)
 
-    assert_raises(NotImplementedError,
-                  lambda: setattr(NoOverrideSet(), 'test', 1))
+    with raises(NotImplementedError):
+        NoOverrideSet().test = 1
 
     class OverrideSet(HasIPropsTester):
         test = IProperty(setter=True)
@@ -78,7 +95,7 @@ def test_overriding_set():
 
     o = OverrideSet()
     o.test = 1
-    assert_equal(o.val, 1)
+    assert o.val == 1
 
 
 def test_overriding_pre_set():
@@ -94,7 +111,7 @@ def test_overriding_pre_set():
 
     o = OverridePreSet()
     o.test = 1
-    assert_equal(o.val, 0.5)
+    assert o.val == 0.5
 
 
 def test_overriding_post_set():
@@ -113,7 +130,7 @@ def test_overriding_post_set():
 
     o = OverridePreSet()
     o.test = 1
-    assert_equal(o.val, (1, 0.5))
+    assert o.val == (1, 0.5)
 
 
 def test_caching_permissions():
@@ -122,11 +139,11 @@ def test_caching_permissions():
         caching_permissions = {'b': True, 'c': False}
 
     a = Cache(caching_permissions={'a': True})
-    assert_equal(a._caching_permissions, set(['a', 'b']))
-    assert_equal(Cache.caching_permissions, {'b': True, 'c': False})
+    assert a._caching_permissions == set(['a', 'b'])
+    assert Cache.caching_permissions == {'b': True, 'c': False}
 
     b = Cache(caching_allowed=False, caching_permissions={'a': True})
-    assert_equal(b._caching_permissions, set())
+    assert b._caching_permissions == set()
 
 
 def test_subsystem_declaration():
@@ -136,16 +153,16 @@ def test_subsystem_declaration():
         sub_test = SubSystem()
 
     d = DeclareSubsystem(caching_permissions={'sub_test': {'aa': True}})
-    assert_true(d.__subsystems__)
-    assert_is_instance(d.sub_test, SubSystem)
-    assert_true(d.sub_test._caching_permissions)
+    assert d.__subsystems__
+    assert isinstance(d.sub_test, SubSystem)
+    assert d.sub_test._caching_permissions
 
     d = DeclareSubsystem(caching_allowed=False,
                          caching_permissions={'sub_test': {'aa': True}})
-    assert_false(d.sub_test._caching_permissions)
+    assert not d.sub_test._caching_permissions
 
     d = DeclareSubsystem(caching_permissions={'sub_test': {}})
-    assert_false(d.sub_test._caching_permissions)
+    assert not d.sub_test._caching_permissions
 
 
 def test_channel_declaration():
@@ -158,19 +175,19 @@ def test_channel_declaration():
         ch = Dummy()
 
     d = DeclareChannel(caching_permissions={'ch': {'aa': True}})
-    assert_true(d.__channels__)
-    assert_true(hasattr(d, 'get_ch'))
+    assert d.__channels__
+    assert hasattr(d, 'get_ch')
     channel = d.get_ch(1)
-    assert_is_instance(channel, Dummy)
-    assert_true(channel._caching_permissions)
-    assert_is(d.get_ch(1), channel)
+    assert isinstance(channel, Dummy)
+    assert channel._caching_permissions
+    assert d.get_ch(1) is channel
 
     d = DeclareChannel(caching_allowed=False,
                        caching_permissions={'ch': {'aa': True}})
-    assert_false(d.get_ch(1)._caching_permissions)
+    assert not d.get_ch(1)._caching_permissions
 
     d = DeclareChannel(caching_permissions={'ch': {}})
-    assert_false(d.get_ch(1)._caching_permissions)
+    assert not d.get_ch(1)._caching_permissions
 
 
 def test_clone_if_needed():
@@ -183,14 +200,14 @@ def test_clone_if_needed():
         def _get_test(self, iprop):
             return 1
 
-    assert_is(Overriding.test, prop)
+    assert Overriding.test is prop
 
     class OverridingParent(Overriding):
 
         def _get_test(self):
             return 2
 
-    assert_is_not(OverridingParent.test, prop)
+    assert OverridingParent.test is not prop
 
 
 def test_get_range():
@@ -200,6 +217,11 @@ def test_get_range():
 
 def test_discard_range():
     pass
+
+
+def test_def_check():
+    with raises(NotImplementedError):
+        HasIProps().default_check_instr_operation()
 
 
 class TestHasIPropsCache(object):
@@ -235,55 +257,158 @@ class TestHasIPropsCache(object):
     def test_clear_all_caches(self):
 
         self.a.clear_cache()
-        assert_equal(self.a._cache, {})
-        assert_equal(self.ss._cache, {})
-        assert_equal(self.ch1._cache, {})
-        assert_equal(self.ch2._cache, {})
+        assert self.a._cache == {}
+        assert self.ss._cache == {}
+        assert self.ch1._cache == {}
+        assert self.ch2._cache == {}
 
     def test_clear_save_ss(self):
 
         self.a.clear_cache(False)
-        assert_equal(self.a._cache, {})
-        assert_equal(self.ss._cache, {'test': 1})
-        assert_equal(self.ch1._cache, {})
-        assert_equal(self.ch2._cache, {})
+        assert self.a._cache == {}
+        assert self.ss._cache == {'test': 1}
+        assert self.ch1._cache == {}
+        assert self.ch2._cache == {}
 
     def test_clear_save_ch(self):
 
         self.a.clear_cache(channels=False)
-        assert_equal(self.a._cache, {})
-        assert_equal(self.ss._cache, {})
-        assert_equal(self.ch1._cache, {'aux': 1})
-        assert_equal(self.ch2._cache, {'aux': 2})
+        assert self.a._cache == {}
+        assert self.ss._cache == {}
+        assert self.ch1._cache == {'aux': 1}
+        assert self.ch2._cache == {'aux': 2}
 
     def test_clear_by_prop(self):
 
         self.a.clear_cache(properties=['test1', 'ch.aux', 'ss.test'])
-        assert_equal(self.a._cache, {'test2': 2})
-        assert_equal(self.ss._cache, {})
-        assert_equal(self.ch1._cache, {})
-        assert_equal(self.ch2._cache, {})
+        assert self.a._cache == {'test2': 2}
+        assert self.ss._cache == {}
+        assert self.ch1._cache == {}
+        assert self.ch2._cache == {}
 
     def test_check_cache_all_caches(self):
         res = self.a.check_cache()
-        assert_equal(res, {'test1': 1, 'test2': 2, 'ss': {'test': 1},
-                           'ch': {1: {'aux': 1}, 2: {'aux': 2}}})
+        assert res == {'test1': 1, 'test2': 2, 'ss': {'test': 1},
+                       'ch': {1: {'aux': 1}, 2: {'aux': 2}}}
 
     def test_check_cache_save_ss(self):
         res = self.a.check_cache(False)
-        assert_equal(res, {'test1': 1, 'test2': 2,
-                           'ch': {1: {'aux': 1}, 2: {'aux': 2}}})
+        assert res == {'test1': 1, 'test2': 2,
+                       'ch': {1: {'aux': 1}, 2: {'aux': 2}}}
 
     def test_check_cache_save_ch(self):
         res = self.a.check_cache(channels=False)
-        assert_equal(res, {'test1': 1, 'test2': 2, 'ss': {'test': 1}})
+        assert res == {'test1': 1, 'test2': 2, 'ss': {'test': 1}}
 
     def test_check_cache_prop(self):
         res = self.a.check_cache(properties=['test1', 'ss.test', 'ch.aux'])
-        assert_equal(res, {'test1': 1, 'ss': {'test': 1},
-                           'ch': {1: {'aux': 1}, 2: {'aux': 2}}})
+        assert res == {'test1': 1, 'ss': {'test': 1},
+                       'ch': {1: {'aux': 1}, 2: {'aux': 2}}}
 
 
-def test_def_check():
-    assert_raises(NotImplementedError,
-                  lambda: HasIProps().default_check_instr_operation())
+class TestPatching(object):
+
+    def setup(self):
+        class DecorateIP(IProperty):
+
+            def __init__(self, *args, **kwargs):
+                super(DecorateIP, self).__init__(*args, **kwargs)
+                self.dec = '<br>'
+
+            def post_get(self, iprop, val):
+                return self.dec+val+self.dec
+
+        class PatchTester(HasIPropsTester):
+            test = DecorateIP(getter=True, setter=True)
+
+            test2 = DecorateIP(getter=True, setter=True)
+
+            def _get_test(self, iprop):
+                return 'this is a test'
+
+            def _pre_set_test2(self, iprop, value):
+                return 0.5*value
+
+            def _set_test2(self, iprop, value):
+                self.val = value
+
+        self.obj = PatchTester()
+        self.obj2 = PatchTester()
+
+    def test_patching_attr(self):
+
+        self.obj.patch_iprop('test', dec='<it>')
+        p = type(self.obj).test
+        assert p in self.obj._proxied
+        assert self.obj in p._proxies
+        assert self.obj.test == '<it>this is a test<it>'
+
+    def test_patching_method(self):
+
+        self.obj.patch_iprop('test2',
+                             set=lambda p, o, v: setattr(o, 'val', 2*v))
+        p = type(self.obj).test2
+        self.obj.test2 = 1
+        assert p in self.obj._proxied
+        assert self.obj in p._proxies
+        # This means that pre_set was correctly preserved.
+        assert self.obj.val == 1
+
+    def test_patching_already_patched_iprop(self):
+        self.obj.patch_iprop('test', dec='<it>')
+        self.obj.patch_iprop('test', post_get=lambda p, o, v: '<tt>'+v)
+        p = type(self.obj).test
+        assert len(self.obj._proxied) == 1
+        assert len(p._proxies) == 1
+        assert self.obj.test == '<tt>this is a test'
+
+    def test_unpatching_attr_proxy_kept(self):
+        self.obj.patch_iprop('test', dec='<it>',
+                             post_get=lambda p, o, v: '<tt>'+v+p.dec)
+        self.obj.unpatch_iprop('test', 'dec')
+        assert self.obj.test == '<tt>this is a test<br>'
+
+    def test_unpatching_attr_proxy_discarded(self):
+        self.obj.patch_iprop('test', dec='<it>')
+        self.obj.unpatch_iprop('test', 'dec')
+        p = type(self.obj).test
+        assert p not in self.obj._proxied
+        assert self.obj not in p._proxies
+        assert self.obj.test == '<br>this is a test<br>'
+
+    def test_unpatching_method_proxy_kept(self):
+        self.obj.patch_iprop('test', dec='<it>',
+                             post_get=lambda p, o, v: '<tt>'+v+p.dec)
+        self.obj.unpatch_iprop('test', 'post_get')
+        assert self.obj.test == '<it>this is a test<it>'
+
+    def test_unpatching_method_proxy_discarded(self):
+        self.obj.patch_iprop('test', post_get=lambda p, o, v: '<tt>'+v+p.dec)
+        self.obj.unpatch_iprop('test', 'post_get')
+        p = type(self.obj).test
+        assert p not in self.obj._proxied
+        assert self.obj not in p._proxies
+        assert self.obj.test == '<br>this is a test<br>'
+
+    def test_raising_error(self):
+        with raises(KeyError):
+            self.obj.unpatch_iprop('test', 'post_get')
+
+    def test_unpatching_all(self):
+        self.obj.patch_iprop('test', dec='<it>')
+        self.obj.patch_iprop('test2',
+                             set=lambda p, o, v: setattr(o, 'val', 2*v))
+        self.obj2.patch_iprop('test', dec='<dt>')
+
+        self.obj.test2 = 1
+        assert self.obj.test == '<it>this is a test<it>'
+        assert self.obj.val == 1
+        assert self.obj2.test == '<dt>this is a test<dt>'
+
+        self.obj.unpatch_all()
+        p = type(self.obj).test
+
+        self.obj.test2 = 1
+        assert self.obj.test == '<br>this is a test<br>'
+        assert self.obj.val == 0.5
+        assert self.obj2.test == '<dt>this is a test<dt>'

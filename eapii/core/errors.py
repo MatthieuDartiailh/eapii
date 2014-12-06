@@ -12,11 +12,13 @@
 from __future__ import (division, unicode_literals, print_function,
                         absolute_import)
 
+
 class InstrError(Exception):
     """Generic error refereing to instrument.
 
     """
     pass
+
 
 class InstrIOError(InstrError):
     """Generic errors for communication errors.

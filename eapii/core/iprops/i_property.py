@@ -17,6 +17,46 @@ from copy import copy
 from ..errors import InstrIOError
 
 
+def get_chain(iprop, instance):
+    """Generic get chain for IProperties.
+
+    """
+    i = -1
+    while i < iprop._secur:
+        try:
+            i += 1
+            val = iprop.get(instance)
+        except instance.secure_com_exceptions as e:
+            if i != iprop._secur:
+                instance.reopen_connection()
+                continue
+            else:
+                raise
+    alt_val = iprop.post_get(instance, val)
+
+    return alt_val
+
+
+def set_chain(iprop, instance, value):
+    """Generic set chain for IProperties.
+
+
+    """
+    i_val = iprop.pre_set(instance, value)
+    i = -1
+    while i < iprop._secur:
+        try:
+            i += 1
+            val = iprop.set(instance, i_val)
+        except instance.secure_com_exceptions as e:
+            if i != iprop._secur:
+                instance.reopen_connection()
+                continue
+            else:
+                raise
+    iprop.post_set(instance, value, i_val)
+
+
 class IProperty(property):
     """Descriptor representing the most basic instrument property.
 
@@ -54,6 +94,8 @@ class IProperty(property):
         self._getter = getter
         self._setter = setter
         self._secur = secure_comm
+        # Don't create the weak values dict if it is not used.
+        self._proxies = ()
 
         super(IProperty, self).__init__(fget=self._get if getter else None,
                                         fset=self._set if setter else None)
@@ -179,6 +221,7 @@ class IProperty(property):
 
         """
         p = self.__class__(self._getter, self._setter, self._secur)
+        p.__doc__ = self.__doc__
 
         for k, v in self.__dict__.items():
             if isinstance(v, MethodType):
@@ -192,43 +235,34 @@ class IProperty(property):
         """Getter defined when the user provides a value for the get arg.
 
         """
-        if self.name in instance._cache:
-            return instance._cache[self.name]
+        with instance.lock:
+            cache = instance._cache
+            name = self.name
+            if name in cache:
+                return cache[name]
 
-        i = -1
-        while i < self._secur:
-            try:
-                i += 1
-                val = self.get(instance)
-            except instance.secure_com_exceptions as e:
-                if i != self._secur:
-                    instance.reopen_connection()
-                    continue
-                else:
-                    raise
-        alt_val = self.post_get(instance, val)
-        instance._cache[self.name] = alt_val
-        return alt_val
+            if instance in self._proxies:
+                return self._proxies[instance].proxy_get(instance)
+
+            val = get_chain(self, instance)
+            if name in instance._caching_permissions:
+                cache[name] = val
+
+            return val
 
     def _set(self, instance, value):
         """Setter defined when the user provides a value for the set arg.
 
         """
-        cache = instance._cache
-        if self.name in cache and value == cache[self.name]:
-            return
+        with instance.lock:
+            cache = instance._cache
+            name = self.name
+            if name in cache and value == cache[name]:
+                return
 
-        i_val = self.pre_set(instance, value)
-        i = -1
-        while i < self._secur:
-            try:
-                i += 1
-                val = self.set(instance, i_val)
-            except instance.secure_com_exceptions as e:
-                if i != self._secur:
-                    instance.reopen_connection()
-                    continue
-                else:
-                    raise
-        self.post_set(instance, value, i_val)
-        cache[self.name] = value
+            if instance in self._proxies:
+                return self._proxies[instance].proxy_set(instance, value)
+
+            set_chain(self, instance, value)
+            if name in instance._caching_permissions:
+                cache[name] = value
