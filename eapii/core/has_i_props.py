@@ -15,7 +15,6 @@ to customize IProperty behaviour by defining specially named methods.
 from __future__ import (division, unicode_literals, print_function,
                         absolute_import)
 from future.utils import with_metaclass, bind_method
-from inspect import getmembers
 from types import FunctionType, MethodType
 from functools import update_wrapper
 from inspect import cleandoc, getsourcelines
@@ -36,6 +35,8 @@ POST_SET_PREFIX = '_post_set_'
 CUSTOMIZABLE = ((POST_GET_PREFIX, 'post_get'), (GET_PREFIX, 'get'),
                 (PRE_SET_PREFIX, 'pre_set'), (SET_PREFIX, 'set'),
                 (POST_SET_PREFIX, 'post_set'))
+
+RANGE_PREFIX = '_get_range_'
 
 
 def wrap_custom_iprop_methods(cls, meth_name, iprop):
@@ -141,6 +142,7 @@ class HasIPropsMeta(type):
                        'set': [],       # Set methods: _set_*
                        'post_set': []   # Post set methods: _post_set_*
                        }
+        ranges = []
 
         for key, value in dct.iteritems():
             if isinstance(value, IProperty):
@@ -167,6 +169,8 @@ class HasIPropsMeta(type):
                     cust_iprops['get'].append(key)
                 elif key.startswith(SET_PREFIX):
                     cust_iprops['set'].append(key)
+                elif key.startswith(RANGE_PREFIX):
+                    ranges.append(key)
 
         # Analyse the source code to find the doc for the defined IProperties.
         if iprops:
@@ -234,6 +238,9 @@ class HasIPropsMeta(type):
         # Put a reference to the subsystems in the class.
         # This is used at initialisation to create the appropriate subsystems
         cls.__subsystems__ = subsystems
+
+        # Keep a ref to names of the declared ranges accessors.
+        cls.__ranges__ = set(ranges)
 
         # Create channel initialisation methods.
         cls.__channels__ = set(channels)
@@ -311,9 +318,17 @@ class HasIProps(with_metaclass(HasIPropsMeta, object)):
         """
         return getattr(self.__class__, name)
 
-    # TODO implement
+    @property
+    def declared_ranges(self):
+        """Set of declared ranges for the class.
+
+        Ranges are considered declared as soon as a getter has been defined.
+
+        """
+        return self.__ranges__
+
     def get_range(self, range_id):
-        """ Access the range object matching the definition.
+        """Access the range object matching the definition.
 
         Parameters
         ----------
@@ -324,15 +339,17 @@ class HasIProps(with_metaclass(HasIPropsMeta, object)):
 
         Returns
         -------
-        range_validator: RangeValidator
+        range_validator: AbstractRangeValidator
             A range validator matching the current attributes state, which can
-            be used to validate either float (assuming it is expressed in the
-            right unit) or a Quantity.
+            be used to validate values.
 
         """
-        pass
+        if range_id in self._range_cache:
+            return self._range_cache[range_id]
 
-    # TODO implement
+        else:
+            return getattr(self, '_get_range_'+range_id)()
+
     def discard_range(self, range_id):
         """ Remove a range from the cache.
 
@@ -347,7 +364,8 @@ class HasIProps(with_metaclass(HasIPropsMeta, object)):
             keyword).
 
         """
-        pass
+        if range_id in self._range_cache:
+            del self._range_cache[range_id]
 
     def patch_iprop(self, iprop, **kwargs):
         """Modify the behaviour of an iproperty for the current instance.
@@ -441,7 +459,6 @@ class HasIProps(with_metaclass(HasIPropsMeta, object)):
             will be cleared if not specified.
 
         """
-        test = lambda obj: isinstance(obj, IProperty)
         cache = self._cache
         if properties:
             sss = defaultdict(list)
@@ -497,7 +514,6 @@ class HasIProps(with_metaclass(HasIPropsMeta, object)):
             None will be returned for the field with no cached value.
 
         """
-        test = lambda obj: isinstance(obj, IProperty)
         cache = {}
         if properties:
             sss = defaultdict(list)

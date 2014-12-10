@@ -12,7 +12,6 @@
 from __future__ import (division, unicode_literals, print_function,
                         absolute_import)
 from types import MethodType
-from copy import copy
 
 from ..errors import InstrIOError
 
@@ -26,7 +25,8 @@ def get_chain(iprop, instance):
         try:
             i += 1
             val = iprop.get(instance)
-        except instance.secure_com_exceptions as e:
+            break
+        except instance.secure_com_exceptions:
             if i != iprop._secur:
                 instance.reopen_connection()
                 continue
@@ -47,8 +47,9 @@ def set_chain(iprop, instance, value):
     while i < iprop._secur:
         try:
             i += 1
-            val = iprop.set(instance, i_val)
-        except instance.secure_com_exceptions as e:
+            iprop.set(instance, i_val)
+            break
+        except instance.secure_com_exceptions:
             if i != iprop._secur:
                 instance.reopen_connection()
                 continue
@@ -83,7 +84,7 @@ class IProperty(property):
         to communicate after re-opening the communication. The value is used to
         determine how many times to retry.
 
-    Parameters
+    Attributes
     ----------
     name : unicode
         Name of the IProperty. This is set by the HasIProps instance and

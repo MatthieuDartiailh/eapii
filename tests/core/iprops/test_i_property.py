@@ -70,7 +70,7 @@ class TestGettingChain(object):
         assert p._get(d) == 3
         assert p._get(d) == 3
 
-    def test_secur_comm_0(self):
+    def test_secur_comm_1(self):
         self.p.call = 0
 
         def getter(self, obj):
@@ -89,10 +89,30 @@ class TestGettingChain(object):
 
     def test_secur_comm_2(self):
         self.p.call = 0
-        self.p._secur = 1
+        self.p._secur = 5
 
         def getter(self, obj):
             self.call += 1
+            raise ValueError()
+
+        self.p.get = MethodType(getter, self.p)
+
+        d = FalseDriver()
+        d.secure_com_exceptions = (ValueError)
+        try:
+            self.p._get(d)
+        except ValueError:
+            pass
+        assert self.p.call == 6
+
+    def test_secur_comm_3(self):
+        self.p.call = 0
+        self.p._secur = 10
+
+        def getter(self, obj):
+            self.call += 1
+            if self.call == 2:
+                return
             raise ValueError()
 
         self.p.get = MethodType(getter, self.p)
@@ -161,7 +181,7 @@ class TestSettingChain(object):
         self.p._set(d, 1)
         assert self.p.call == 3
 
-    def test_secur_comm_0(self):
+    def test_secur_comm_1(self):
         self.p.call = 0
 
         def setter(self, obj, value):
@@ -180,10 +200,30 @@ class TestSettingChain(object):
 
     def test_secur_comm_2(self):
         self.p.call = 0
-        self.p._secur = 1
+        self.p._secur = 5
 
         def setter(self, obj, value):
             self.call += 1
+            raise ValueError()
+
+        self.p.set = MethodType(setter, self.p)
+
+        d = FalseDriver()
+        d.secure_com_exceptions = (ValueError)
+        try:
+            self.p._set(d, 1)
+        except ValueError:
+            pass
+        assert self.p.call == 6
+
+    def test_secur_comm_3(self):
+        self.p.call = 0
+        self.p._secur = 10
+
+        def setter(self, obj, value):
+            self.call += 1
+            if self.call == 2:
+                return
             raise ValueError()
 
         self.p.set = MethodType(setter, self.p)
