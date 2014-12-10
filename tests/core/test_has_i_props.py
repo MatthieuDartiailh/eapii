@@ -18,7 +18,6 @@ from eapii.core.has_i_props import HasIProps
 from eapii.core.subsystem import SubSystem
 from eapii.core.channel import Channel
 from eapii.core.iprops.i_property import IProperty
-from eapii.core.iprops.proxies import _ProxyManager
 
 
 class HasIPropsTester(HasIProps):
@@ -210,13 +209,19 @@ def test_clone_if_needed():
     assert OverridingParent.test is not prop
 
 
-def test_get_range():
+def test_range():
 
-    pass
+    class RangeDecl(HasIPropsTester):
 
+        def _range_test(self):
+            return object()
 
-def test_discard_range():
-    pass
+    assert RangeDecl.__ranges__ == set(['test'])
+    decl = RangeDecl()
+    r = decl.get_range('test')
+    assert decl.get_range('test') is r
+    decl.discard_range('test')
+    assert decl.get_range('test') is not r
 
 
 def test_def_check():
@@ -406,7 +411,6 @@ class TestPatching(object):
         assert self.obj2.test == '<dt>this is a test<dt>'
 
         self.obj.unpatch_all()
-        p = type(self.obj).test
 
         self.obj.test2 = 1
         assert self.obj.test == '<br>this is a test<br>'

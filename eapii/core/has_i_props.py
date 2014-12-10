@@ -36,7 +36,7 @@ CUSTOMIZABLE = ((POST_GET_PREFIX, 'post_get'), (GET_PREFIX, 'get'),
                 (PRE_SET_PREFIX, 'pre_set'), (SET_PREFIX, 'set'),
                 (POST_SET_PREFIX, 'post_set'))
 
-RANGE_PREFIX = '_get_range_'
+RANGE_PREFIX = '_range_'
 
 
 def wrap_custom_iprop_methods(cls, meth_name, iprop):
@@ -240,7 +240,7 @@ class HasIPropsMeta(type):
         cls.__subsystems__ = subsystems
 
         # Keep a ref to names of the declared ranges accessors.
-        cls.__ranges__ = set(ranges)
+        cls.__ranges__ = set([r[7:] for r in ranges])
 
         # Create channel initialisation methods.
         cls.__channels__ = set(channels)
@@ -344,11 +344,11 @@ class HasIProps(with_metaclass(HasIPropsMeta, object)):
             be used to validate values.
 
         """
-        if range_id in self._range_cache:
-            return self._range_cache[range_id]
+        if range_id not in self._range_cache:
+            self._range_cache[range_id] = getattr(self,
+                                                  RANGE_PREFIX+range_id)()
 
-        else:
-            return getattr(self, '_get_range_'+range_id)()
+        return self._range_cache[range_id]
 
     def discard_range(self, range_id):
         """ Remove a range from the cache.
