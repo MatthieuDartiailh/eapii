@@ -122,7 +122,7 @@ class IProperty(property):
             necessary it should be done in the post_get method.
 
         """
-        return instance.default_get_iproperty(self._getter)
+        return instance.default_get_iproperty(self, self._getter)
 
     def post_get(self, instance, value):
         """Hook to alter the value returned by the underlying driver.
@@ -186,7 +186,7 @@ class IProperty(property):
             Object to pass to the driver method to set the value.
 
         """
-        instance.default_set_iproperty(self._setter, value)
+        instance.default_set_iproperty(self, self._setter, value)
 
     def post_set(self, instance, value, i_value):
         """Hook to perform additional action after setting a value.
@@ -211,7 +211,7 @@ class IProperty(property):
             Raised if the driver detects an issue.
 
         """
-        res, _ = instance.default_check_instr_operation()
+        res, _ = instance.default_check_instr_operation(self)
         if not res:
             mess = 'The instrument did not succeeded to set {} to {} ({}).'
             raise InstrIOError(mess.format(self._name, value, i_value))

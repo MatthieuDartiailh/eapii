@@ -76,7 +76,8 @@ class BaseInstrument(with_metaclass(InstrumentSigleton, HasIProps)):
     Attributes
     ----------
     secure_com_except : tuple
-# TODO complete
+        Class attributes used to determine which errors to take into account
+        when securing a communication.
 
     """
     secure_com_except = (InstrIOError)

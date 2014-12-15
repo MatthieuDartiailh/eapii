@@ -15,24 +15,25 @@ from pytest import raises, yield_fixture
 from pint import UnitRegistry
 
 from eapii.core import unit
-from eapii.core.unit import set_ureg, get_ureg
+from eapii.core.unit import set_unit_registry, get_unit_registry
 
 
 @yield_fixture
 def teardown():
+    unit.UNIT_REGISTRY = None
     yield
-    unit.ureg = None
+    unit.UNIT_REGISTRY = None
 
 
-def test_set_ureg(teardown):
+def test_set_unit_registry(teardown):
     ureg = UnitRegistry()
-    set_ureg(ureg)
+    set_unit_registry(ureg)
 
-    assert get_ureg() is ureg
+    assert get_unit_registry() is ureg
 
 
-def test_reset_ureg(teardown):
+def test_reset_unit_registry(teardown):
     ureg = UnitRegistry()
-    set_ureg(ureg)
+    set_unit_registry(ureg)
     with raises(ValueError):
-        set_ureg(ureg)
+        set_unit_registry(ureg)

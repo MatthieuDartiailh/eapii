@@ -52,22 +52,22 @@ class SubSystem(with_metaclass(DeclarationMeta, HasIProps)):
         """
         self.parent.reopen_connection()
 
-    def default_get_iproperty(self, cmd, *args, **kwargs):
+    def default_get_iproperty(self, iprop, cmd, *args, **kwargs):
         """Subsystems simply pipes the call to their parent.
 
         """
-        return self.parent.default_get_iproperty(cmd, *args, **kwargs)
+        return self.parent.default_get_iproperty(iprop, cmd, *args, **kwargs)
 
-    def default_set_iproperty(self, cmd, *args, **kwargs):
+    def default_set_iproperty(self, iprop, cmd, *args, **kwargs):
         """Subsystems simply pipes the call to their parent.
 
         """
-        return self.parent.default_set_iproperty(cmd, *args, **kwargs)
+        return self.parent.default_set_iproperty(iprop, cmd, *args, **kwargs)
 
-    def default_check_instr_operation(self):
+    def default_check_instr_operation(self, iprop):
         """Subsystems simply pipes the call to their parent.
 
         """
-        return self.parent.default_check_instr_operation()
+        return self.parent.default_check_instr_operation(iprop)
 
 AbstractSubSystem.register(SubSystem)

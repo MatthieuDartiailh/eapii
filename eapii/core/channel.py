@@ -47,24 +47,24 @@ class Channel(SubSystem):
     def lock(self):
         return self.parent.lock
 
-    def default_get_iproperty(self, cmd, *args, **kwargs):
+    def default_get_iproperty(self, iprop, cmd, *args, **kwargs):
         """Channels simply pipes the call to their parent.
 
         """
         kwargs['ch_id'] = self.id
-        return self.parent.default_get_iproperty(cmd, *args, **kwargs)
+        return self.parent.default_get_iproperty(iprop, cmd, *args, **kwargs)
 
-    def default_set_iproperty(self, cmd, *args, **kwargs):
+    def default_set_iproperty(self, iprop, cmd, *args, **kwargs):
         """Channels simply pipes the call to their parent.
 
         """
         kwargs['ch_id'] = self.id
-        return self.parent.default_set_iproperty(cmd, *args, **kwargs)
+        return self.parent.default_set_iproperty(iprop, cmd, *args, **kwargs)
 
-    def default_check_instr_operation(self):
+    def default_check_instr_operation(self, iprop):
         """Channels simply pipes the call to their parent.
 
         """
-        return self.parent.default_check_instr_operation()
+        return self.parent.default_check_instr_operation(iprop)
 
 AbstractChannel.register(Channel)

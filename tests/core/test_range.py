@@ -14,6 +14,7 @@ from __future__ import (division, unicode_literals, print_function,
 from pytest import raises
 
 from eapii.core.range import IntRangeValidator, FloatRangeValidator
+from eapii.core.unit import get_unit_registry
 
 
 def teardown_module():
@@ -24,11 +25,11 @@ def teardown_module():
 class TestIntRangeValidator(object):
 
     def test_validate_larger(self):
-        iv = IntRangeValidator(1)
+        iv = IntRangeValidator(0)
 
         assert iv.validate(2)
-        assert iv.validate(1)
-        assert not iv.validate(0)
+        assert iv.validate(0)
+        assert not iv.validate(-1)
 
     def test_validate_smaller(self):
         iv = IntRangeValidator(max=1)
@@ -71,6 +72,13 @@ class TestIntRangeValidator(object):
         assert not iv.validate(4)
         assert not iv.validate(0)
 
+    def test_zero_step(self):
+        iv = IntRangeValidator(0, 5, 0)
+
+        assert iv.validate(2)
+        assert iv.validate(0)
+        assert not iv.validate(-1)
+
     def test_init_checks(self):
         with raises(ValueError):
             IntRangeValidator(step=1)
@@ -85,11 +93,11 @@ class TestIntRangeValidator(object):
 class TestFloatRangeValidator(object):
 
     def test_validate_larger(self):
-        iv = FloatRangeValidator(0.1)
+        iv = FloatRangeValidator(0.0)
 
         assert iv.validate(2.1)
         assert iv.validate(0.1)
-        assert not iv.validate(0.05)
+        assert not iv.validate(-0.05)
 
     def test_validate_smaller(self):
         iv = FloatRangeValidator(max=1.1)
@@ -134,6 +142,13 @@ class TestFloatRangeValidator(object):
         assert not iv.validate(4.01)
         assert not iv.validate(0)
 
+    def test_zero_step(self):
+        iv = FloatRangeValidator(0.0, step=0.0)
+
+        assert iv.validate(2.1)
+        assert iv.validate(0.1)
+        assert not iv.validate(-0.05)
+
     def test_init_checks(self):
         with raises(ValueError):
             FloatRangeValidator(step=1)
@@ -143,3 +158,10 @@ class TestFloatRangeValidator(object):
             FloatRangeValidator(max=1)
         with raises(TypeError):
             FloatRangeValidator(1.0, step=1)
+
+    def test_unit_conversion(self):
+        fv = FloatRangeValidator(-1.0, 1.0, unit='V')
+        u = get_unit_registry()
+        assert fv.validate(0.1)
+        assert fv.validate(100*u.parse_expression('mV'))
+        assert not fv.validate(0.1*u.parse_expression('kV'))

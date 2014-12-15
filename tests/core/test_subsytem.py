@@ -12,7 +12,6 @@
 from __future__ import (division, unicode_literals, print_function,
                         absolute_import)
 from nose.tools import assert_equal, assert_is
-from threading import RLock
 
 from eapii.core.subsystem import SubSystem
 from .testing_tools import Parent
@@ -26,7 +25,7 @@ class SSParent(Parent):
 def test_ss_d_get():
 
     a = SSParent()
-    a.ss.default_get_iproperty('Test', 1, a=2)
+    a.ss.default_get_iproperty(None, 'Test', 1, a=2)
     assert_equal(a.d_get_called, 1)
     assert_equal(a.d_get_cmd, 'Test')
     assert_equal(a.d_get_args, (1,))
@@ -35,7 +34,7 @@ def test_ss_d_get():
 
 def test_ss_d_set():
     a = SSParent()
-    a.ss.default_set_iproperty('Test', 1, a=2)
+    a.ss.default_set_iproperty(None, 'Test', 1, a=2)
     assert_equal(a.d_set_called, 1)
     assert_equal(a.d_set_cmd, 'Test')
     assert_equal(a.d_set_args, (1,))
@@ -44,7 +43,7 @@ def test_ss_d_set():
 
 def test_ss_d_check():
     a = SSParent()
-    a.ss.default_check_instr_operation()
+    a.ss.default_check_instr_operation(None)
     assert_equal(a.d_check_instr, 1)
 
 

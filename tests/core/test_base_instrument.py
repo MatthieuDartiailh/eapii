@@ -6,6 +6,9 @@
 #
 # The full license is in the file LICENCE, distributed with this software.
 #------------------------------------------------------------------------------
+"""Module dedicated to testing BaseInstrument behaviour.
+
+"""
 from __future__ import (division, unicode_literals, print_function,
                         absolute_import)
 from nose.tools import raises, assert_true, assert_false, assert_is

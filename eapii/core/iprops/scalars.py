@@ -19,7 +19,7 @@ from pint.quantity import _Quantity
 
 from .i_property import IProperty
 from ..range import AbstractRangeValidator
-from ..unit import get_ureg
+from ..unit import get_unit_registry
 
 
 class Enumerable(IProperty):
@@ -45,8 +45,8 @@ class Enumerable(IProperty):
         Permitted values for the property.
 
     """
-    def __init__(self, getter=None, setter=None, secur_com=0, values=()):
-        super(IProperty, self).__init__(getter, setter, secur_com)
+    def __init__(self, getter=None, setter=None, secure_comm=0, values=()):
+        super(Enumerable, self).__init__(getter, setter, secure_comm)
         self.values = set(values)
         if setter and values:
             self.pre_set = self.validate_in
@@ -109,8 +109,8 @@ class RangeValidated(IProperty):
         provided it is used to retrieve the range from the driver at runtime.
 
     """
-    def __init__(self, getter=None, setter=None, secur_com=0,  range=None):
-        super(RangeValidated, self).__init__(getter, setter, secur_com)
+    def __init__(self, getter=None, setter=None, secure_comm=0, range=None):
+        super(RangeValidated, self).__init__(getter, setter, secure_comm)
         if range:
             if isinstance(range, AbstractRangeValidator):
                 self.range = range
@@ -132,6 +132,7 @@ class RangeValidated(IProperty):
         """
         if not self.range.validate(value):
             mess = 'The provided value {} is out of bound for {}.'
+            mess = mess.format(value, self.name)
             ran = self.range
             if ran.minimum:
                 mess += ' Minimum {}.'.format(ran.minimum)
@@ -150,7 +151,7 @@ class RangeValidated(IProperty):
 
         """
         self.range = obj.get_range(self.range_id)
-        return self.validate_value(obj, value)
+        return self.validate_range(obj, value)
 
 
 class Int(RangeValidated, Enumerable):
@@ -159,12 +160,12 @@ class Int(RangeValidated, Enumerable):
     Support enumeration or range validation (the range takes precedence).
 
     """
-    def __init__(self, getter=None, setter=None, secur_com=0, values=(),
+    def __init__(self, getter=None, setter=None, secure_comm=0, values=(),
                  range=None):
-        if values:
-            Enumerable.__init__(self, getter, setter, secur_com, values)
+        if values and not range:
+            Enumerable.__init__(self, getter, setter, secure_comm, values)
         else:
-            super(RangeValidated, self).__init__(getter, setter, secur_com)
+            super(Int, self).__init__(getter, setter, secure_comm, range)
 
     def post_get(self, instance, value):
         """Cast the value returned by the instrument to an int.
@@ -179,11 +180,11 @@ class Float(RangeValidated):
     Support range validation and unit conversion.
 
     """
-    def __init__(self, getter=None, setter=None, secur_com=0, range=None,
+    def __init__(self, getter=None, setter=None, secure_comm=0, range=None,
                  unit=None):
-        super(Float, self).__init__(getter, setter, secur_com, None, range)
+        super(Float, self).__init__(getter, setter, secure_comm, range)
         if unit:
-            ureg = get_ureg()
+            ureg = get_unit_registry()
             self.unit = ureg.parse_expression(unit)
         else:
             self.unit = None
@@ -191,7 +192,13 @@ class Float(RangeValidated):
         if range:
             self._validate = self.pre_set
             del self.pre_set
-            self.pre_set = self.validate
+            if unit:
+                self.pre_set = self.convert_and_validate
+            else:
+                self.pre_set = self.validate
+        else:
+            if unit:
+                self.pre_set = self.convert
 
     def post_get(self, instance, value):
         """Cast the value returned by the instrument to float or Quantity.
@@ -204,18 +211,41 @@ class Float(RangeValidated):
         else:
             return fval
 
-    def validate(self, instance, value):
+    def convert_and_validate(self, instance, value):
         """Convert unit and check value.
 
         This method is meant to be used as a preset.
 
         """
-        if isinstance(value, _Quantity) and self.unit:
+        if isinstance(value, _Quantity):
             value = value.to(self.unit)
-            self._validate(value)
+            self._validate(instance, value)
             value = value.magnitude
 
         else:
-            self._validate(value)
+            self._validate(instance, value*self.unit)
+
+        return value
+
+    def convert(self, instance, value):
+        """Unit convert.
+
+        This method is meant to be used as a preset.
+
+        """
+        if isinstance(value, _Quantity):
+            value = value.to(self.unit).magnitude
+
+        return value
+
+    def validate(self, instance, value):
+        """Validate the value.
+
+        This method is meant to be used as a preset.
+
+        """
+        self._validate(instance, value)
+        if isinstance(value, _Quantity):
+            value = value.magnitude
 
         return value

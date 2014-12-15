@@ -24,8 +24,8 @@ class Mapping(IProperty):
         Mapping between the user values and instrument values.
 
     """
-    def __init__(self, getter=None, setter=None, secur_com=0, mapping={}):
-        super(Mapping, self).__init__(getter, setter, secur_com)
+    def __init__(self, getter=None, setter=None, secure_comm=0, mapping={}):
+        super(Mapping, self).__init__(getter, setter, secure_comm)
         self._map = mapping
         self._imap = {v: k for k, v in mapping.items()}
 

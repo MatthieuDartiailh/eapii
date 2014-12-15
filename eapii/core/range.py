@@ -16,7 +16,7 @@ from math import modf
 from functools import update_wrapper
 from pint.quantity import _Quantity
 
-from .unit import get_ureg
+from .unit import get_unit_registry
 
 
 class AbstractRangeValidator(object):
@@ -50,11 +50,11 @@ class IntRangeValidator(AbstractRangeValidator):
 
     def __init__(self, min=None, max=None, step=None):
         mess = 'The {} of an IntRange must be an integer not {}.'
-        if not min and not max:
+        if min is None and max is None:
             raise ValueError('An IntRangeValidator must have a min or max')
-        if min and not isinstance(min, int):
+        if min is not None and not isinstance(min, int):
             raise TypeError(mess.format('min', type(min)))
-        if max and not isinstance(max, int):
+        if max is not None and not isinstance(max, int):
             raise TypeError(mess.format('max', type(max)))
         if step and not isinstance(step, int):
             raise TypeError(mess.format('step', type(step)))
@@ -63,8 +63,8 @@ class IntRangeValidator(AbstractRangeValidator):
         self.maximum = max
         self.step = step
 
-        if min:
-            if max:
+        if min is not None:
+            if max is not None:
                 if step:
                     self.validate = self._validate_range_and_step
                 else:
@@ -140,15 +140,15 @@ class FloatRangeValidator(AbstractRangeValidator):
 
     """
 
-    __slots__ = ('units')
+    __slots__ = ('unit')
 
     def __init__(self, min=None, max=None, step=None, unit=None):
         mess = 'The {} of an IntRange must be an integer not {}.'
-        if not min and not max:
+        if min is None and max is None:
             raise ValueError('An IntRangeValidator must have a min or max')
-        if min and not isinstance(min, float):
+        if min is not None and not isinstance(min, float):
             raise TypeError(mess.format('min', type(min)))
-        if max and not isinstance(max, float):
+        if max is not None and not isinstance(max, float):
             raise TypeError(mess.format('max', type(max)))
         if step and not isinstance(step, float):
             raise TypeError(mess.format('step', type(step)))
@@ -158,14 +158,14 @@ class FloatRangeValidator(AbstractRangeValidator):
         self.step = step
 
         if unit:
-            ureg = get_ureg()
-            self.unit = ureg.parse_expr(unit)
+            ureg = get_unit_registry()
+            self.unit = ureg.parse_expression(unit)
             wrap = self._unit_conversion
         else:
             wrap = lambda x: x
 
-        if min:
-            if max:
+        if min is not None:
+            if max is not None:
                 if step:
                     self.validate = wrap(self._validate_range_and_step)
                 else:
@@ -185,6 +185,9 @@ class FloatRangeValidator(AbstractRangeValidator):
         """Decorator handling unit conversion to the unit.
 
         """
+        if isinstance(cmp_func, MethodType):
+            cmp_func = cmp_func.__func__
+
         def wrapper(self, value):
             if not isinstance(value, _Quantity):
                 return cmp_func(self, value)

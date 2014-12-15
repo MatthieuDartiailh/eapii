@@ -31,7 +31,7 @@ class HasIPropsTester(HasIProps):
     def reopen_connection(self):
         pass
 
-    def default_check_instr_operation(self):
+    def default_check_instr_operation(self, iprop):
         return True, None
 
 
@@ -226,7 +226,7 @@ def test_range():
 
 def test_def_check():
     with raises(NotImplementedError):
-        HasIProps().default_check_instr_operation()
+        HasIProps().default_check_instr_operation(None)
 
 
 class TestHasIPropsCache(object):
@@ -309,6 +309,10 @@ class TestHasIPropsCache(object):
         res = self.a.check_cache(properties=['test1', 'ss.test', 'ch.aux'])
         assert res == {'test1': 1, 'ss': {'test': 1},
                        'ch': {1: {'aux': 1}, 2: {'aux': 2}}}
+
+
+class TestCustomizing(object):
+    pass
 
 
 class TestPatching(object):

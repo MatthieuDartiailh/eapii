@@ -32,20 +32,20 @@ class Parent(HasIProps):
         self.ropen_called = 0
         self.lock = RLock()
 
-    def default_get_iproperty(self, cmd, *args, **kwargs):
+    def default_get_iproperty(self, iprop, cmd, *args, **kwargs):
         self.d_get_called += 1
         self.d_get_cmd = cmd
         self.d_get_args = args
         self.d_get_kwargs = kwargs
         return cmd
 
-    def default_set_iproperty(self, cmd, *args, **kwargs):
+    def default_set_iproperty(self, iprop, cmd, *args, **kwargs):
         self.d_set_called += 1
         self.d_set_cmd = cmd
         self.d_set_args = args
         self.d_set_kwargs = kwargs
 
-    def default_check_instr_operation(self):
+    def default_check_instr_operation(self, iprop):
         self.d_check_instr += 1
         return True, None
 

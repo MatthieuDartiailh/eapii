@@ -19,10 +19,10 @@ import logging
 from pint import UnitRegistry
 
 
-ureg = None
+UNIT_REGISTRY = None
 
 
-def set_ureg(unit_registry):
+def set_unit_registry(unit_registry):
     """Set the UnitRegistry used by Eapii.
 
     Given that conversion can only happen for units declared in the same
@@ -41,25 +41,25 @@ def set_ureg(unit_registry):
         If a unit registry has already been set.
 
     """
-    global ureg
-    if ureg:
+    global UNIT_REGISTRY
+    if UNIT_REGISTRY:
         mess = 'The unit registry used by Eapii cannot be changed once set.'
         raise ValueError(mess)
 
-    ureg = unit_registry
+    UNIT_REGISTRY = unit_registry
 
 
-def get_ureg():
+def get_unit_registry():
     """Access the UnitRegistry currently in use by Eapii.
 
     If no UnitRegistry has been previously declared using `set_ureg`, a new
     UnitRegistry  is created.
 
     """
-    global ureg
-    if not ureg:
+    global UNIT_REGISTRY
+    if not UNIT_REGISTRY:
         logger = logging.getLogger(__name__)
         logger.debug('Creating default UnitRegistry for Eapii')
-        ureg = UnitRegistry()
+        UNIT_REGISTRY = UnitRegistry()
 
-    return ureg
+    return UNIT_REGISTRY

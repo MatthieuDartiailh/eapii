@@ -1,10 +1,14 @@
 # -*- coding: utf-8 -*-
 #------------------------------------------------------------------------------
 # Copyright 2014 by Eapii Authors, see AUTHORS for more details.
+#
 # Distributed under the terms of the Modified BSD License.
 #
-# The full license is in the file COPYING.txt, distributed with this software.
+# The full license is in the file LICENCE, distributed with this software.
 #------------------------------------------------------------------------------
+"""Module dedicated to testing IProperty behaviour.
+
+"""
 from __future__ import (division, unicode_literals, print_function,
                         absolute_import)
 from types import MethodType
@@ -25,13 +29,12 @@ class FalseDriver(object):
     def reopen_connection(self):
         pass
 
-    def default_check_instr_operation(self):
+    def default_check_instr_operation(self, iprop):
         return True, None
 
 
 class TestGettingChain(object):
-    """
-    """
+
     def setup(self):
         p = IProperty()
         p.name = 'test'
