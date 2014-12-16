@@ -14,7 +14,7 @@ from __future__ import (division, unicode_literals, print_function,
 from threading import RLock
 from pytest import raises
 
-from eapii.core.has_i_props import HasIProps
+from eapii.core.has_i_props import HasIProps, set_iprop_paras
 from eapii.core.subsystem import SubSystem
 from eapii.core.channel import Channel
 from eapii.core.iprops.i_property import IProperty
@@ -311,8 +311,33 @@ class TestHasIPropsCache(object):
                        'ch': {1: {'aux': 1}, 2: {'aux': 2}}}
 
 
-class TestCustomizing(object):
-    pass
+def test_customizing():
+
+    class DecorateIP(IProperty):
+
+        def __init__(self, getter=True, setter=True, secure_comm=0,
+                     dec='<br>'):
+            super(DecorateIP, self).__init__(getter, setter)
+            self.dec = dec
+
+        def post_get(self, iprop, val):
+            return self.dec+val+self.dec
+
+    class ParentTester(HasIPropsTester):
+        test = DecorateIP(getter=True, setter=True)
+
+        def _get_test(self, iprop):
+            return 'this is a test'
+
+    class CustomizationTester(ParentTester):
+
+        test = set_iprop_paras(dec='<it>')
+
+    assert CustomizationTester.test is not ParentTester.test
+    aux1 = ParentTester()
+    aux2 = CustomizationTester()
+    assert aux1.test != aux2.test
+    assert aux2.test.startswith('<it>')
 
 
 class TestPatching(object):

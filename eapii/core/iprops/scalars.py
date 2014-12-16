@@ -50,6 +50,7 @@ class Enumerable(IProperty):
         self.values = set(values)
         if setter and values:
             self.pre_set = self.validate_in
+        self.creation_kwargs['values'] = values
 
     def validate_in(self, instance, value):
         if value not in self.values:
@@ -123,6 +124,7 @@ class RangeValidated(IProperty):
                     validator or a string used to retrieve the range through
                     get_range''')
                 raise TypeError(mess)
+        self.creation_kwargs['range'] = range
 
     def validate_range(self, obj, value):
         """Make sure a value is in the given range.
@@ -199,6 +201,8 @@ class Float(RangeValidated):
         else:
             if unit:
                 self.pre_set = self.convert
+
+        self.creation_kwargs['unit'] = unit
 
     def post_get(self, instance, value):
         """Cast the value returned by the instrument to float or Quantity.

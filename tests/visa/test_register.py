@@ -30,5 +30,5 @@ class TestRegister(object):
         assert not byte['a']
 
     def test_pre_set(self):
-        r = Register('a', names=('a', 'b', None, 'r', None, None, None, None))
+        r = Register('a', names={'a': 0, 'b': 1, 'r': 3})
         assert r.pre_set(None, {'a': True, 'b': False}) == 1

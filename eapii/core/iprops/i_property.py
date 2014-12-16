@@ -67,6 +67,11 @@ class IProperty(property):
     bare, one should rather use the more specialised found in other modules
     of the iprops package.
 
+    When subclassing an IProperty a number of rule should be enforced :
+    - the subclass should accept all the parameters from the base class
+    - all creation arguments must be stored in creation_kwargs. Failing to do
+    this will result in the impossibility to use set_iprop_paras.
+
     Parameters
     ----------
     getter : optional
@@ -89,6 +94,9 @@ class IProperty(property):
     name : unicode
         Name of the IProperty. This is set by the HasIProps instance and
         should not be manipulated by user code.
+    creation_kwargs : dict
+        Dictionary in which all the creation args should be stored to allow
+        subclass customisation. This should not be manipulated by user code.
 
     """
     def __init__(self, getter=None, setter=None, secure_comm=0):
@@ -97,6 +105,8 @@ class IProperty(property):
         self._secur = secure_comm
         # Don't create the weak values dict if it is not used.
         self._proxies = ()
+        self.creation_kwargs = {'getter': getter, 'setter': setter,
+                                'secure_comm': secure_comm}
 
         super(IProperty, self).__init__(fget=self._get if getter else None,
                                         fset=self._set if setter else None)
@@ -221,7 +231,7 @@ class IProperty(property):
         methods
 
         """
-        p = self.__class__(self._getter, self._setter, self._secur)
+        p = self.__class__(self._getter, self._setter, secure_comm=self._secur)
         p.__doc__ = self.__doc__
 
         for k, v in self.__dict__.items():

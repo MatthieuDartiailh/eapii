@@ -24,9 +24,10 @@ class Register(IProperty):
         Command to retrieve the byte state.
     setter : unicode
         Command to set the byte state.
-    names : iterable
-        Names to associate to each bit fields from 0 to 7. None can be used to
-        mark a useless bit.
+    names : iterable or dict
+        Names to associate to each bit fields from 0 to 7. When using an
+        iterable None can be used to mark a useless bit. When using a dict
+        the values can be used to specify the bits to consider.
     secure_comm : int, optional
         Whether or not a failed communication should result in a new attempt
         to communicate after re-opening the communication. The value is used to
@@ -35,9 +36,18 @@ class Register(IProperty):
     """
     def __init__(self, getter=None, setter=None, names=(), secure_comm=0):
         super(Register, self).__init__(getter, setter, secure_comm=secure_comm)
-        self.names = tuple(names)
+
+        if isinstance(names, dict):
+            aux = [None]*8
+            for n, i in names.items():
+                aux[i] = n
+            names = aux
+
         if len(names) != 8:
             raise ValueError('Register necessitates 8 names')
+
+        self.names = tuple(names)
+        self.creation_kwargs['names'] = names
 
     def post_get(self, instance, value):
         """Convert the instrument into a dict.

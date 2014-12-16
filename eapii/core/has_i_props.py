@@ -101,6 +101,41 @@ def channel_getter_factory(cls, name, ch_cls):
     bind_method(cls, f_name, channel_getter)
 
 
+class set_iprop_paras(object):
+    """Placeholder use to alter an iprop in a subclass.
+
+    This can be used to lightly alter an IProperty defined on a parent class
+    by for example changing the secure_comm or the getter but without
+    rewriting everything.
+
+    Parameters
+    ----------
+    **kwargs :
+        New keyword arguments to pass to the constructor to alter the IProp.
+
+    """
+    def __init__(self, **kwargs):
+        self.custom_attrs = kwargs
+
+    def customize(self, iprop):
+        """Customize an iprop using the given kwargs.
+
+        """
+        cls = type(iprop)
+        kwargs = iprop.creation_kwargs.copy()
+        kwargs.update(self.custom_attrs)
+        new = cls(**kwargs)
+        # Now set the method modifiers if any.
+        ndict = new.__dict__
+        for k, v in iprop.__dict__.items():
+            if k not in ndict:
+                if isinstance(v, MethodType):
+                    setattr(new, k, MethodType(v.__func__, new))
+                else:
+                    setattr(new, k, v)
+        return new
+
+
 class AbstractHasIProp(with_metaclass(ABCMeta, object)):
     """Sentinel class for the collections of IProperties.
 
@@ -114,6 +149,8 @@ class AbstractSubSystem(with_metaclass(ABCMeta, object)):
     """
     pass
 
+AbstractHasIProp.register(AbstractSubSystem)
+
 
 class AbstractChannel(with_metaclass(ABCMeta, object)):
     """Sentinel class for channel identification.
@@ -121,15 +158,14 @@ class AbstractChannel(with_metaclass(ABCMeta, object)):
     """
     pass
 
+AbstractHasIProp.register(AbstractChannel)
+
 
 class HasIPropsMeta(type):
     """ Metaclass handling IProperty customisation, subsystems registration...
 
     """
     def __new__(meta, name, bases, dct):
-
-        # Create the class object.
-        cls = super(HasIPropsMeta, meta).__new__(meta, name, bases, dct)
 
         # Pass over the class dict once and collect the information
         # necessary to implement the various behaviours.
@@ -142,22 +178,22 @@ class HasIPropsMeta(type):
                        'set': [],       # Set methods: _set_*
                        'post_set': []   # Post set methods: _post_set_*
                        }
-        ranges = []
+        iprop_paras = {}                # Sentinels used to change an iprop
+                                        # behaviour.
+        ranges = []                     # Names of the defined ranges.
 
         for key, value in dct.iteritems():
             if isinstance(value, IProperty):
                 iprops[key] = value
                 value.name = key
+            elif isinstance(value, set_iprop_paras):
+                iprop_paras[key] = value
             # We check first channels as they are also subsystems
             elif isinstance(value, type):
                 if issubclass(value, AbstractChannel):
                     channels[key] = value
-                    if not value.secure_com_exceptions:
-                        value.secure_com_exceptions = cls.secure_com_exceptions
                 elif issubclass(value, AbstractSubSystem):
                     subsystems[key] = value
-                    if not value.secure_com_exceptions:
-                        value.secure_com_exceptions = cls.secure_com_exceptions
             elif isinstance(value, FunctionType):
                 if key.startswith(POST_GET_PREFIX):
                     cust_iprops['post_get'].append(key)
@@ -171,6 +207,12 @@ class HasIPropsMeta(type):
                     cust_iprops['set'].append(key)
                 elif key.startswith(RANGE_PREFIX):
                     ranges.append(key)
+
+        for k in iprop_paras:
+            del dct[k]
+
+        # Create the class object.
+        cls = super(HasIPropsMeta, meta).__new__(meta, name, bases, dct)
 
         # Analyse the source code to find the doc for the defined IProperties.
         if iprops:
@@ -200,11 +242,19 @@ class HasIPropsMeta(type):
         # static behaviours to only clone a iprops when necessary.
         owned_iprops = set(iprops.keys())
 
+        all_iprops = dict(base_iprops)
+        all_iprops.update(iprops)
+
+        # Clone and customize iprops for which a set_iprops_attr has been
+        # declared.
+        for k, v in iprop_paras.items():
+            ip = v.customize(all_iprops[k])
+            owned_iprops.add(k)
+            setattr(cls, k, ip)
+
         # Add the special statically defined behaviours for the iprops.
         # If the target iprop is defined on a parent class, it is cloned
         # so that the behaviour of the parent class is not modified.
-        all_iprops = dict(base_iprops)
-        all_iprops.update(iprops)
 
         def clone_if_needed(ip):
             if ip.name not in owned_iprops:
@@ -230,6 +280,14 @@ class HasIPropsMeta(type):
 
         for prefix, attr in CUSTOMIZABLE:
             customize_iprops(cls, cust_iprops[attr], prefix, attr)
+
+        for ss in subsystems.values():
+            if not ss.secure_com_exceptions:
+                ss.secure_com_exceptions = cls.secure_com_exceptions
+
+        for ch in channels.values():
+            if not ch.secure_com_exceptions:
+                ch.secure_com_exceptions = cls.secure_com_exceptions
 
         # Put a reference to the iprops dict on the class. This is used
         # by HasIPropsMeta to query for the iprops.
@@ -564,12 +622,14 @@ class HasIProps(with_metaclass(HasIPropsMeta, object)):
             80)
         raise NotImplementedError(message)
 
-    def default_get_iproperty(self, cmd, *args, **kwargs):
+    def default_get_iproperty(self, iprop, cmd, *args, **kwargs):
         """Method used by default by the IProperty to retrieve a value from an
         instrument.
 
         Parameters
         ----------
+        iprop : IProperty
+            Reference to the property issuing this call.
         cmd :
             Command used by the implementation to determine what should be done
             to get the answer from the instrument.
@@ -585,11 +645,13 @@ class HasIProps(with_metaclass(HasIPropsMeta, object)):
             classes subclassing HasIProps.'''), 80)
         raise NotImplementedError(mess)
 
-    def default_set_iproperty(self, cmd, *args, **kwargs):
+    def default_set_iproperty(self, iprop, cmd, *args, **kwargs):
         """Method used by default by the IProperty to set an instrument value.
 
         Parameters
         ----------
+        iprop : IProperty
+            Reference to the property issuing this call.
         cmd :
             Command used by the implementation to determine what should be done
             to set the instrument state.
@@ -605,9 +667,14 @@ class HasIProps(with_metaclass(HasIPropsMeta, object)):
             classes subclassing HasIProps.'''), 80)
         raise NotImplementedError(mess)
 
-    def default_check_instr_operation(self):
+    def default_check_instr_operation(self, iprop):
         """Method used by default by the IProperty to check the instrument
         operation.
+
+        Parameters
+        ----------
+        iprop : IProperty
+            Reference to the property issuing this call.)
 
         Returns
         -------

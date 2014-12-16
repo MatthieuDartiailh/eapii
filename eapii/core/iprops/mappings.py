@@ -28,6 +28,7 @@ class Mapping(IProperty):
         super(Mapping, self).__init__(getter, setter, secure_comm)
         self._map = mapping
         self._imap = {v: k for k, v in mapping.items()}
+        self.creation_kwargs['mapping'] = mapping
 
     def post_get(self, instance, value):
         return self._imap[value]
@@ -56,6 +57,7 @@ class Bool(Mapping):
             for k in aliases:
                 for v in aliases[k]:
                     self._aliases[v] = k
+        self.creation_kwargs['aliases'] = aliases
 
     def pre_set(self, instance, value):
         return self._map[self._aliases[value]]

@@ -15,26 +15,24 @@ from pytest import raises, yield_fixture
 
 from pyvisa.highlevel import ResourceManager
 from eapii.visa.visa import (get_visa_resource_manager,
-                             set_visa_resource_manager,
-                             RESOURCE_MANAGER)
+                             set_visa_resource_manager)
+from eapii.visa import visa
 
 
 @yield_fixture
 def cleanup():
-    global RESOURCE_MANAGER
-    RESOURCE_MANAGER = None
+    visa.RESOURCE_MANAGER = None
     yield
-    RESOURCE_MANAGER = None
+    visa.RESOURCE_MANAGER = None
 
 
 def test_get_rm(cleanup):
     rm = get_visa_resource_manager('@sim')
-    assert rm is RESOURCE_MANAGER
+    assert rm is visa.RESOURCE_MANAGER
 
 
 def test_set_rm(cleanup):
     rm = ResourceManager('@sim')
-    print(rm)
     set_visa_resource_manager(rm)
     assert rm is get_visa_resource_manager()
 
