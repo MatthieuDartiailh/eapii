@@ -14,4 +14,5 @@ from __future__ import (division, unicode_literals, print_function,
 
 from .subsystem import SubSystem
 from .channel import Channel
+from .has_i_props import set_iprop_paras
 from .errors import InstrError, InstrIOError

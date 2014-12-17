@@ -48,7 +48,7 @@ def test_ch_d_check():
 
     a = ChParent()
     ch = a.get_ch(1)
-    ch.default_check_instr_operation(None)
+    ch.default_check_instr_operation(None, None, None)
     assert_equal(a.d_check_instr, 1)
 
 

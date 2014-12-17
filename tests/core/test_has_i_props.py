@@ -64,6 +64,21 @@ def test_overriding_get():
     assert OverrideGet().test == 'This is a test'
 
 
+def test_overriding_pre_get():
+
+    class OverridePreGet(HasIPropsTester):
+        test = IProperty(getter=True)
+
+        def _get_test(self, iprop):
+            return 'this is a test'
+
+        def _pre_get_test(self, iprop):
+            assert False
+
+    with raises(AssertionError):
+        OverridePreGet().test
+
+
 def test_overriding_post_get():
 
     class OverridePostGet(HasIPropsTester):
@@ -226,7 +241,7 @@ def test_range():
 
 def test_def_check():
     with raises(NotImplementedError):
-        HasIProps().default_check_instr_operation(None)
+        HasIProps().default_check_instr_operation(None, None, None)
 
 
 class TestHasIPropsCache(object):
@@ -316,7 +331,7 @@ def test_customizing():
     class DecorateIP(IProperty):
 
         def __init__(self, getter=True, setter=True, secure_comm=0,
-                     dec='<br>'):
+                     checks=None, dec='<br>'):
             super(DecorateIP, self).__init__(getter, setter)
             self.dec = dec
 

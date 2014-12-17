@@ -45,7 +45,7 @@ class Parent(HasIProps):
         self.d_set_args = args
         self.d_set_kwargs = kwargs
 
-    def default_check_instr_operation(self, iprop):
+    def default_check_instr_operation(self, iprop, value, i_value):
         self.d_check_instr += 1
         return True, None
 

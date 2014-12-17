@@ -43,7 +43,7 @@ def test_ss_d_set():
 
 def test_ss_d_check():
     a = SSParent()
-    a.ss.default_check_instr_operation(None)
+    a.ss.default_check_instr_operation(None, None, None)
     assert_equal(a.d_check_instr, 1)
 
 

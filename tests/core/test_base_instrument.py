@@ -36,9 +36,8 @@ def test_binstr_close():
     BaseInstrument({'a': 1}).close_connection()
 
 
-@raises(NotImplementedError)
 def test_binstr_check():
-    BaseInstrument({'a': 1}).check_connection()
+    assert not BaseInstrument({'a': 1}).check_connection()
 
 
 @raises(NotImplementedError)

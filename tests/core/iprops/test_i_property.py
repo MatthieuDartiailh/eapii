@@ -13,6 +13,7 @@ from __future__ import (division, unicode_literals, print_function,
                         absolute_import)
 from types import MethodType
 from threading import RLock
+from pytest import raises
 
 from eapii.core.iprops.i_property import IProperty
 
@@ -31,6 +32,10 @@ class FalseDriver(object):
 
     def default_check_instr_operation(self, iprop):
         return True, None
+
+    def clear_cache(self, properties):
+        for p in properties:
+            del self._cache[p]
 
 
 class TestGettingChain(object):
@@ -55,6 +60,14 @@ class TestGettingChain(object):
         self.p.post_get = MethodType(post_getter, self.p)
         assert self.p._get(FalseDriver()) == '<br>Test<br>'
 
+    def test_overriding_pre_get(self):
+        def pre_getter(self, obj):
+            assert False
+
+        self.p.pre_get = MethodType(pre_getter, self.p)
+        with raises(AssertionError):
+            self.p._get(FalseDriver())
+
     def test_caching(self):
         p = self.p
 
@@ -72,6 +85,24 @@ class TestGettingChain(object):
         d._caching_permissions = set(['test'])
         assert p._get(d) == 3
         assert p._get(d) == 3
+
+    def test_deleter(self):
+        p = self.p
+
+        def getter(self, obj):
+            obj.i += 1
+            return obj.i
+
+        p.get = MethodType(getter, p)
+
+        d = FalseDriver()
+        d._caching_permissions = set(['test'])
+        d.i = 0
+
+        assert p._get(d) == 1
+        assert p._get(d) == 1
+        p._del(d)
+        assert p._get(d) == 2
 
     def test_secur_comm_1(self):
         self.p.call = 0
@@ -256,3 +287,170 @@ def test_cloning():
     assert p2.get.__func__ == aux
     assert p2.get(None) != p.get(None)
     assert p2.__doc__ == p.__doc__
+
+
+def test_checkers():
+
+    class Tester(FalseDriver):
+        t1 = True
+        t2 = False
+
+    p = IProperty(True, checks='{t1} is True; {t2} == False')
+    p.name = 'test'
+    p.get = MethodType(lambda s, o: None, p)
+    p.set = MethodType(lambda s, o, v: v, p)
+    t = Tester()
+
+    assert hasattr(p, 'get_check')
+    assert p.pre_get is p.get_check
+    assert hasattr(p, 'set_check')
+    assert p.pre_set is p.set_check
+
+    p._get(t)
+    p._set(t, 1)
+    t.t2 = True
+
+    with raises(AssertionError):
+        p._get(t)
+    try:
+        p._get(t)
+    except AssertionError as e:
+        m = 'Getting test assertion t2 == False failed, values are : t2=True'
+        assert e.message == m
+
+    with raises(AssertionError):
+        p._set(t, 1)
+    try:
+        p._set(t, 1)
+    except AssertionError as e:
+        m = 'Setting test assertion t2 == False failed, values are : t2=True'
+        assert e.message == m
+
+
+def test_get_check():
+
+    class Tester(FalseDriver):
+        t1 = True
+        t2 = False
+
+    p = IProperty(True, checks=('{t1} is True; {t2} == False', None))
+    p.name = 'test'
+    p.get = MethodType(lambda s, o: None, p)
+    p.set = MethodType(lambda s, o, v: v, p)
+    t = Tester()
+
+    assert hasattr(p, 'get_check')
+    assert not hasattr(p, 'set_check')
+
+    p._get(t)
+    t.t2 = True
+    with raises(AssertionError):
+        p._get(t)
+    try:
+        p._get(t)
+    except AssertionError as e:
+        m = 'Getting test assertion t2 == False failed, values are : t2=True'
+        assert e.message == m
+
+
+def test_set_check():
+
+    class Tester(FalseDriver):
+        t1 = True
+        t2 = False
+
+    p = IProperty(True, checks=(None, '{t1} is True; {t2} == False'))
+    p.name = 'test'
+    p.get = MethodType(lambda s, o: None, p)
+    p.set = MethodType(lambda s, o, v: v, p)
+    t = Tester()
+
+    assert not hasattr(p, 'get_check')
+    assert hasattr(p, 'set_check')
+
+    p._get(t)
+    p._set(t, 1)
+    t.t2 = True
+
+    with raises(AssertionError):
+        p._set(t, 1)
+    try:
+        p._set(t, 1)
+    except AssertionError as e:
+        m = 'Setting test assertion t2 == False failed, values are : t2=True'
+        assert e.message == m
+
+
+class TestWrapWithChecker():
+
+    def setup(self):
+        class Tester(FalseDriver):
+            def __init__(self):
+                super(Tester, self).__init__()
+                self.t1 = True
+                self.t2 = False
+        self.t = Tester()
+
+    def test_wrapping_get_checker_exists(self):
+        p = IProperty(True, checks='{t1} is True; {t2} == False')
+
+        # Wrapping function
+        f = lambda s, o: 'test'
+        p._wrap_with_checker(f)
+        assert p.pre_get.__func__ is not f
+        assert p.pre_get(self.t) == 'test'
+
+        # Wrapping method
+        f = MethodType(lambda s, o: 'test', p)
+        p._wrap_with_checker(f)
+        assert p.pre_get is not f
+        assert p.pre_get(self.t) == 'test'
+
+    def test_wrapping_get_no_checker(self):
+        p = IProperty(True, checks=(None, '{t1} is True; {t2} == False'))
+
+        # Wrapping function
+        f = lambda s, o: 'test'
+        p._wrap_with_checker(f)
+        assert p.pre_get.__func__ is f
+
+        # Wrapping method
+        f = MethodType(lambda s, o: 'test', p)
+        p._wrap_with_checker(f)
+        assert p.pre_get is f
+
+    def test_wrapping_set_checker_exists(self):
+        p = IProperty(True, checks='{t1} is True; {t2} == False')
+
+        # Wrapping function
+        f = lambda s, o, v: 'test'
+        p._wrap_with_checker(f, 'pre_set')
+        assert p.pre_set.__func__ is not f
+        assert p.pre_set(self.t, None) == 'test'
+
+        # Wrapping method
+        f = MethodType(lambda s, o, v: 'test', p)
+        p._wrap_with_checker(f, 'pre_set')
+        assert p.pre_set is not f
+        assert p.pre_set(self.t, None) == 'test'
+
+    def test_wrapping_set_no_checker(self):
+        p = IProperty(True, checks=('{t1} is True; {t2} == False', None))
+
+        # Wrapping function
+        f = lambda s, o, v: 'test'
+        p._wrap_with_checker(f, 'pre_set')
+        assert p.pre_set.__func__ is f
+
+        # Wrapping method
+        f = MethodType(lambda s, o, v: 'test', p)
+        p._wrap_with_checker(f, 'pre_set')
+        assert p.pre_set is f
+
+    def test_wrapping_exception(self):
+        p = IProperty(True, checks=('{t1} is True; {t2} == False', None))
+
+        # Wrapping function
+        f = lambda s, o, v: 'test'
+        with raises(ValueError):
+            p._wrap_with_checker(f, None)
