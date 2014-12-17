@@ -116,14 +116,13 @@ class BaseInstrument(with_metaclass(InstrumentSigleton, HasIProps)):
     def check_connection(self):
         """Check whether or not the cache is likely to have been corrupted.
 
+        Returns
+        -------
+        status : bool
+            True is the connection can be trusted, False otherwise.
+
         """
-        message = fill(cleandoc(
-            '''This method is used to check that the instrument is
-            in remote mode and that none of the values in the cache
-            has been corrupted by a local user, and should be implemented
-            by classes subclassing BaseInstrument'''),
-            80)
-        raise NotImplementedError(message)
+        return False
 
     @property
     def connected(self):
