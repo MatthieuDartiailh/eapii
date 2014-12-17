@@ -11,6 +11,7 @@
 """
 from __future__ import (division, unicode_literals, print_function,
                         absolute_import)
+from collections import OrderedDict
 
 from ..core.iprops.i_property import IProperty
 
@@ -27,7 +28,7 @@ class Register(IProperty):
     names : iterable or dict
         Names to associate to each bit fields from 0 to 7. When using an
         iterable None can be used to mark a useless bit. When using a dict
-        the values can be used to specify the bits to consider.
+        the values are used to specify the bits to consider.
     secure_comm : int, optional
         Whether or not a failed communication should result in a new attempt
         to communicate after re-opening the communication. The value is used to
@@ -38,13 +39,21 @@ class Register(IProperty):
         super(Register, self).__init__(getter, setter, secure_comm=secure_comm)
 
         if isinstance(names, dict):
-            aux = [None]*8
+            aux = list(range(8))
             for n, i in names.items():
                 aux[i] = n
             names = aux
 
-        if len(names) != 8:
-            raise ValueError('Register necessitates 8 names')
+        else:
+            names = list(names)
+            if len(names) != 8:
+                raise ValueError('Register necessitates 8 names')
+
+            # Makes sure every key is unique by using the bit index if None is
+            # found
+            for i, n in enumerate(names[:]):
+                if n is None:
+                    names[i] = i
 
         self.names = tuple(names)
         self.creation_kwargs['names'] = names
@@ -55,8 +64,9 @@ class Register(IProperty):
         """
         val = int(value)
         bit_conversion = lambda x, i: bool(x & (1 << i))
-        return {n: bit_conversion(val, i) for i, n in enumerate(self.names)
-                if n is not None}
+        return OrderedDict((n, bit_conversion(val, i))
+                           for i, n in enumerate(self.names)
+                           if n is not None)
 
     def pre_set(self, instance, value):
         """Convert a dict into a byte value.

@@ -17,6 +17,7 @@ from time import sleep
 from ..core.base_instrument import BaseInstrument
 from ..core.errors import InstrIOError
 from .visa import get_visa_ressource_manager, VisaIOError
+from .register import Register
 
 
 class BaseVisaInstrument(BaseInstrument):
@@ -165,6 +166,9 @@ class VisaMessageInstrument(BaseVisaInstrument):
     mode.
 
     """
+    #: Status byte of the instrument.
+    status_byte = Register(getter=True, names=[None]*8)
+
     def default_get_iproperty(self, iprop, cmd, *args, **kwargs):
         """Query the value using the provided command.
 
@@ -308,8 +312,7 @@ class VisaMessageInstrument(BaseVisaInstrument):
         """
         self._driver.assert_trigger()
 
-    def read_status_byte(self):
-        """Service request status register."""
+    def _get_status_byte(self, iprop):
         return self._driver.read_stb()
 
 

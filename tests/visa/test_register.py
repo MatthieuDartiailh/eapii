@@ -25,9 +25,10 @@ class TestRegister(object):
     def test_post_get(self):
         r = Register('a', names=('a', 'b', None, 'r', None, None, None, None))
         byte = r.post_get(None, '10')
-        assert len(byte) == 3
+        assert len(byte) == 8
         assert byte['b'] and byte['r']
         assert not byte['a']
+        assert not byte[2]
 
     def test_pre_set(self):
         r = Register('a', names={'a': 0, 'b': 1, 'r': 3})
