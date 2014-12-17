@@ -26,13 +26,15 @@ from .iprops.i_property import IProperty
 from .iprops.proxies import make_proxy
 
 # Prefixes for IProperty specially named methods.
-POST_GET_PREFIX = '_post_get_'
+PRE_GET_PREFIX = '_pre_get_'
 GET_PREFIX = '_get_'
+POST_GET_PREFIX = '_post_get_'
 PRE_SET_PREFIX = '_pre_set_'
 SET_PREFIX = '_set_'
 POST_SET_PREFIX = '_post_set_'
 
-CUSTOMIZABLE = ((POST_GET_PREFIX, 'post_get'), (GET_PREFIX, 'get'),
+CUSTOMIZABLE = ((PRE_GET_PREFIX, 'pre_get'), (GET_PREFIX, 'get'),
+                (POST_GET_PREFIX, 'post_get'),
                 (PRE_SET_PREFIX, 'pre_set'), (SET_PREFIX, 'set'),
                 (POST_SET_PREFIX, 'post_set'))
 
@@ -172,7 +174,8 @@ class HasIPropsMeta(type):
         iprops = {}                     # IProperty declarations
         subsystems = {}                 # Subsystem declarations
         channels = {}                   # Channels declaration
-        cust_iprops = {'get': [],       # Get methods: _get_*
+        cust_iprops = {'pre_get': [],   # Pre get methods _pre_get_*
+                       'get': [],       # Get methods: _get_*
                        'post_get': [],  # Post get methods: _post_get_*
                        'pre_set': [],   # Pre set methods: _pre_set_*
                        'set': [],       # Set methods: _set_*
@@ -201,6 +204,8 @@ class HasIPropsMeta(type):
                     cust_iprops['pre_set'].append(key)
                 elif key.startswith(POST_SET_PREFIX):
                     cust_iprops['post_set'].append(key)
+                elif key.startswith(PRE_GET_PREFIX):
+                    cust_iprops['pre_get'].append(key)
                 elif key.startswith(GET_PREFIX):
                     cust_iprops['get'].append(key)
                 elif key.startswith(SET_PREFIX):
@@ -667,14 +672,18 @@ class HasIProps(with_metaclass(HasIPropsMeta, object)):
             classes subclassing HasIProps.'''), 80)
         raise NotImplementedError(mess)
 
-    def default_check_instr_operation(self, iprop):
+    def default_check_instr_operation(self, iprop, value, i_value):
         """Method used by default by the IProperty to check the instrument
         operation.
 
         Parameters
         ----------
         iprop : IProperty
-            Reference to the property issuing this call.)
+            Reference to the property issuing this call.
+        value :
+            Value assigned by the user.
+        i_value :
+            Value computed by the pre_set method of the IProperty.
 
         Returns
         -------

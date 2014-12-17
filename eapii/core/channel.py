@@ -61,10 +61,10 @@ class Channel(SubSystem):
         kwargs['ch_id'] = self.id
         return self.parent.default_set_iproperty(iprop, cmd, *args, **kwargs)
 
-    def default_check_instr_operation(self, iprop):
+    def default_check_instr_operation(self, iprop, value, i_value):
         """Channels simply pipes the call to their parent.
 
         """
-        return self.parent.default_check_instr_operation(iprop)
+        return self.parent.default_check_instr_operation(iprop, value, i_value)
 
 AbstractChannel.register(Channel)
