@@ -45,14 +45,18 @@ class Enumerable(IProperty):
         Permitted values for the property.
 
     """
-    def __init__(self, getter=None, setter=None, secure_comm=0, values=()):
+    def __init__(self, getter=None, setter=None, secure_comm=0, checks=None,
+                 values=()):
         super(Enumerable, self).__init__(getter, setter, secure_comm)
         self.values = set(values)
         if setter and values:
-            self.pre_set = self.validate_in
+            self._wrap_with_checker(self.validate_in, 'pre_set')
         self.creation_kwargs['values'] = values
 
     def validate_in(self, instance, value):
+        """Check the provided values is in the supported values.
+
+        """
         if value not in self.values:
             mess = 'Allowed value for {} are {}, {} not allowed'
             raise ValueError(mess.format(self.name, self.values, value))
@@ -110,15 +114,17 @@ class RangeValidated(IProperty):
         provided it is used to retrieve the range from the driver at runtime.
 
     """
-    def __init__(self, getter=None, setter=None, secure_comm=0, range=None):
+    def __init__(self, getter=None, setter=None, secure_comm=0, check=None,
+                 range=None):
         super(RangeValidated, self).__init__(getter, setter, secure_comm)
         if range:
+            wrap = self._wrap_with_checker
             if isinstance(range, AbstractRangeValidator):
                 self.range = range
-                self.pre_set = self.validate_range
+                wrap(self.validate_range, 'pre_set')
             elif istext(range):
                 self.range_id = range
-                self.pre_set = self.get_range_and_validate
+                wrap(self.get_range_and_validate, 'pre_set')
             else:
                 mess = cleandoc('''The range kwarg should either be a range
                     validator or a string used to retrieve the range through
@@ -162,12 +168,14 @@ class Int(RangeValidated, Enumerable):
     Support enumeration or range validation (the range takes precedence).
 
     """
-    def __init__(self, getter=None, setter=None, secure_comm=0, values=(),
-                 range=None):
+    def __init__(self, getter=None, setter=None, secure_comm=0, checks=None,
+                 values=(), range=None):
         if values and not range:
-            Enumerable.__init__(self, getter, setter, secure_comm, values)
+            Enumerable.__init__(self, getter, setter, secure_comm, checks,
+                                values)
         else:
-            super(Int, self).__init__(getter, setter, secure_comm, range)
+            super(Int, self).__init__(getter, setter, secure_comm, checks,
+                                      range)
 
     def post_get(self, instance, value):
         """Cast the value returned by the instrument to an int.
@@ -176,22 +184,28 @@ class Int(RangeValidated, Enumerable):
         return int(value)
 
 
-class Float(RangeValidated):
+class Float(RangeValidated, Enumerable):
     """ Property casting the instrument answer to a float or Quantity.
 
     Support range validation and unit conversion.
 
     """
-    def __init__(self, getter=None, setter=None, secure_comm=0, range=None,
-                 unit=None):
-        super(Float, self).__init__(getter, setter, secure_comm, range)
+    def __init__(self, getter=None, setter=None, secure_comm=0, checks=None,
+                 values=(), range=None, unit=None):
+        if values and not range:
+            Enumerable.__init__(self, getter, setter, secure_comm, checks,
+                                values)
+        else:
+            super(Float, self).__init__(getter, setter, secure_comm, checks,
+                                        range)
+
         if unit:
             ureg = get_unit_registry()
             self.unit = ureg.parse_expression(unit)
         else:
             self.unit = None
 
-        if range:
+        if range or values:
             self._validate = self.pre_set
             del self.pre_set
             if unit:
@@ -202,7 +216,8 @@ class Float(RangeValidated):
             if unit:
                 self.pre_set = self.convert
 
-        self.creation_kwargs['unit'] = unit
+        self.creation_kwargs.update({'unit': unit, 'values': values,
+                                     'range': range})
 
     def post_get(self, instance, value):
         """Cast the value returned by the instrument to float or Quantity.
@@ -218,7 +233,9 @@ class Float(RangeValidated):
     def convert_and_validate(self, instance, value):
         """Convert unit and check value.
 
-        This method is meant to be used as a preset.
+        This method is meant to be used as a pre_set replacement. When
+        overriding pre_set it should be used when both unit and range are
+        present.
 
         """
         if isinstance(value, _Quantity):
@@ -232,9 +249,10 @@ class Float(RangeValidated):
         return value
 
     def convert(self, instance, value):
-        """Unit convert.
+        """Convert unit.
 
-        This method is meant to be used as a preset.
+        This method is meant to be used as a pre_set replacement. When
+        overriding pre_set it should be used when only unit is present.
 
         """
         if isinstance(value, _Quantity):
@@ -245,7 +263,8 @@ class Float(RangeValidated):
     def validate(self, instance, value):
         """Validate the value.
 
-        This method is meant to be used as a preset.
+        This method is meant to be used as a pre_set replacement. When
+        overriding pre_set it should be used when only range is present.
 
         """
         self._validate(instance, value)
@@ -253,3 +272,12 @@ class Float(RangeValidated):
             value = value.magnitude
 
         return value
+
+    def validate_in(self, instance, value):
+        """Check the provided values is in the supported values.
+
+        """
+        if isinstance(value, _Quantity):
+            value = value.magnitude
+
+        return Enumerable.validate_in(self, instance, value)

@@ -24,16 +24,19 @@ class Mapping(IProperty):
         Mapping between the user values and instrument values.
 
     """
-    def __init__(self, getter=None, setter=None, secure_comm=0, mapping={}):
+    def __init__(self, getter=None, setter=None, secure_comm=0, checks=None,
+                 mapping={}):
         super(Mapping, self).__init__(getter, setter, secure_comm)
         self._map = mapping
         self._imap = {v: k for k, v in mapping.items()}
         self.creation_kwargs['mapping'] = mapping
 
+        self._wrap_with_checker(self.map_value, 'pre_set')
+
     def post_get(self, instance, value):
         return self._imap[value]
 
-    def pre_set(self, instance, value):
+    def map_value(self, instance, value):
         return self._map[value]
 
 
@@ -49,9 +52,9 @@ class Bool(Mapping):
         Keys should be True and False and values the list of aliases.
 
     """
-    def __init__(self, getter=None, setter=None, secur_com=0, mapping={},
-                 aliases={}):
-        super(Bool, self).__init__(getter, setter, secur_com, mapping)
+    def __init__(self, getter=None, setter=None, secur_com=0, checks=None,
+                 mapping={}, aliases={}):
+        super(Bool, self).__init__(getter, setter, secur_com, checks, mapping)
         self._aliases = {True: True, False: False}
         if aliases:
             for k in aliases:
@@ -59,5 +62,6 @@ class Bool(Mapping):
                     self._aliases[v] = k
         self.creation_kwargs['aliases'] = aliases
 
-    def pre_set(self, instance, value):
+    def map_value(self, instance, value):
+        self._aliases[value]
         return self._map[self._aliases[value]]

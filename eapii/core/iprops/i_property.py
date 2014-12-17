@@ -12,6 +12,9 @@
 from __future__ import (division, unicode_literals, print_function,
                         absolute_import)
 from types import MethodType
+from future.utils import exec_
+from inspect import cleandoc
+from functools import update_wrapper
 
 from ..errors import InstrIOError
 
@@ -21,6 +24,8 @@ def get_chain(iprop, instance):
 
     """
     i = -1
+    iprop.pre_get(instance)
+
     while i < iprop._secur:
         try:
             i += 1
@@ -88,6 +93,17 @@ class IProperty(property):
         Whether or not a failed communication should result in a new attempt
         to communicate after re-opening the communication. The value is used to
         determine how many times to retry.
+    checks : unicode or tuple(2)
+        Booelan tests to execute before anything else when attempting to get or
+        set an iproperty. Multiple assertion can be separated with ';'.
+        Instrument values can be referred to using the following syntax :
+        {iprop_name}.
+        If a single string is provided it is used to run checks before get and
+        set, if a tuple of length 2 is provided the first element is used for
+        the get operation, the second for the set operation, None can be used
+        to indicate no check should be performed.
+        The check methods built from this are bound to the get_check and
+        set_check names.
 
     Attributes
     ----------
@@ -99,19 +115,30 @@ class IProperty(property):
         subclass customisation. This should not be manipulated by user code.
 
     """
-    def __init__(self, getter=None, setter=None, secure_comm=0):
+    def __init__(self, getter=None, setter=None, secure_comm=0, checks=None):
         self._getter = getter
         self._setter = setter
         self._secur = secure_comm
         # Don't create the weak values dict if it is not used.
         self._proxies = ()
         self.creation_kwargs = {'getter': getter, 'setter': setter,
-                                'secure_comm': secure_comm}
+                                'secure_comm': secure_comm, 'checks': checks}
 
         super(IProperty, self).__init__(fget=self._get if getter else None,
-                                        fset=self._set if setter else None)
-
+                                        fset=self._set if setter else None,
+                                        fdel=self._del)
+        if checks:
+            self._build_checkers(checks)
         self.name = ''
+
+    def pre_get(self, instance):
+        """Hook to perform checks before querying a value from the instrument.
+
+        If anything goes wrong this method should raise the corresponding
+        error.
+
+        """
+        pass
 
     def get(self, instance):
         """Acces the parent driver to retrieve the state of the instrument.
@@ -221,9 +248,13 @@ class IProperty(property):
             Raised if the driver detects an issue.
 
         """
-        res, _ = instance.default_check_instr_operation(self)
+        res, details = instance.default_check_instr_operation(self)
         if not res:
-            mess = 'The instrument did not succeeded to set {} to {} ({}).'
+            mess = 'The instrument did not succeed to set {} to {} ({})'
+            if details:
+                mess += ':' + str(details)
+            else:
+                mess += '.'
             raise InstrIOError(mess.format(self._name, value, i_value))
 
     def clone(self):
@@ -241,6 +272,119 @@ class IProperty(property):
                 setattr(p, k, v)
 
         return p
+
+    def _wrap_with_checker(self, func, target='pre_get'):
+        """Wrap a func to execute checker before it if necessary and bind as
+        method.
+
+        Parameters
+        ----------
+        func : callable
+            Callable to use as pre_set or pre_get method which should be
+            wrapped.
+        target : {'pre_get', 'pre_set'}
+            Target method to which bind the wrapper.
+
+        """
+        if target not in ('pre_get', 'pre_set'):
+            mess = cleandoc('''The target of _wrap_with_checker should be
+                            pre_set or pre_get, not {}''')
+            raise ValueError(mess.format(target))
+
+        func_ = func.__func__ if isinstance(func, MethodType) else func
+
+        if target == 'pre_get' and hasattr(self, 'get_check'):
+                def wrapper(self, instance):
+                    self.get_check(instance)
+                    return func_(self, instance)
+                update_wrapper(wrapper, func_)
+                func = wrapper
+        elif target == 'pre_set' and hasattr(self, 'set_check'):
+            def wrapper(self, instance, value):
+                self.set_check(instance, value)
+                return func_(self, instance, value)
+            update_wrapper(wrapper, func_)
+            func = wrapper
+
+        if isinstance(func, MethodType):
+            if func.__self__ is not self:
+                func = MethodType(func.__func__, self)
+        else:
+            func = MethodType(func, self)
+
+        setattr(self, target, func)
+
+    def _build_checkers(self, checks):
+        """Create the custom check function and bind them to check_get and
+        check_set.
+
+        """
+        build = self._build_checker
+        if len(checks) == 2:
+            if checks[0]:
+                self.get_check = MethodType(build(checks[0]), self)
+                self.pre_get = self.get_check
+            if checks[1]:
+                self.set_check = MethodType(build(checks[1], True), self)
+                self.pre_set = self.set_check
+        else:
+            self.get_check = MethodType(build(checks), self)
+            self.pre_get = self.get_check
+            self.set_check = MethodType(build(checks, True), self)
+            self.pre_set = self.set_check
+
+    def _build_checker(self, check, set=False):
+        """Assemble a checker function from the provided assertions.
+
+        Parameters
+        ----------
+        check : unicode
+            ; separated string containing boolean test to assert. '{' and '}'
+            delimit field which should be replaced by instrument state. 'value'
+            should be considered a reserved keyword available when checking
+            a set operation.
+
+        Returns
+        -------
+        checker : function
+            Function to use
+
+        """
+        func_def = 'def check(self, instance):\n' if not set\
+            else 'def check(self, instance, value):\n'
+        assertions = check.split(';')
+        for assertion in assertions:
+            # First find replacement fields.
+            aux = assertion.split('{')
+            if len(aux) < 2:
+                # Silently ignore checks unrelated to instrument state.
+                continue
+            line = 'assert '
+            els = [el.strip() for s in aux for el in s.split('}')]
+            for i in range(0, len(els), 2):
+                e = els[i]
+                if i+1 < len(els):
+                    line += e + ' getattr(instance, "{}") '.format(els[i+1])
+                else:
+                    line += e
+            values = ', '.join(('getattr(instance,  "{}")'.format(el)
+                                for el in els[1::2]))
+
+            val_fmt = ', '.join(('{}'.format(el)+'={}' for el in els[1::2]))
+            a_mess = 'assertion {} failed, '.format(' '.join(els).strip())
+            a_mess += 'values are : {}".format(self.name, {})'.format(val_fmt,
+                                                                      values)
+
+            if set:
+                a_mess = '"Setting {} ' + a_mess
+            else:
+                a_mess = '"Getting {} ' + a_mess
+
+            func_def += '    ' + line + ', ' + a_mess + '\n'
+
+        loc = {}
+        exec_(func_def, locs=loc)
+        return loc['check']
 
     def _get(self, instance):
         """Getter defined when the user provides a value for the get arg.
@@ -277,3 +421,9 @@ class IProperty(property):
             set_chain(self, instance, value)
             if name in instance._caching_permissions:
                 cache[name] = value
+
+    def _del(self, instance):
+        """Deleter clearing the cache of the instrument for this IProperty.
+
+        """
+        instance.clear_cache(properties=(self.name,))
