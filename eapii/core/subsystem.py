@@ -37,6 +37,11 @@ class SubSystem(with_metaclass(DeclarationMeta, HasIProps)):
     This mechanism allow to avoid crowding the instrument namespace with very
     long IProperty names, for example.
 
+    Attributes
+    ----------
+    parent : HasIProps
+        Parent object of the subsystem.
+
     """
     def __init__(self, parent, **kwargs):
         super(SubSystem, self).__init__(**kwargs)
@@ -44,6 +49,7 @@ class SubSystem(with_metaclass(DeclarationMeta, HasIProps)):
 
     @property
     def lock(self):
+        """Access to parent lock."""
         return self.parent.lock
 
     def reopen_connection(self):

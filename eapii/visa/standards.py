@@ -17,9 +17,9 @@ project.
 """
 from __future__ import (division, unicode_literals, print_function,
                         absolute_import)
-from .visa_instrs import MessageVisaInstrument
+from .visa_instrs import VisaMessageInstrument
 from .register import Register
-from ..core.api import Bool
+from ..core.iprops.api import Bool
 
 
 EVENT_STATUS_BYTE = (
@@ -34,7 +34,7 @@ EVENT_STATUS_BYTE = (
     )
 
 
-class IEC60488(MessageVisaInstrument):
+class IEC60488(VisaMessageInstrument):
     """ Base class for instrument implementing the following commands.
 
     Reporting Commands

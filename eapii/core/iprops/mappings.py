@@ -52,9 +52,10 @@ class Bool(Mapping):
         Keys should be True and False and values the list of aliases.
 
     """
-    def __init__(self, getter=None, setter=None, secur_com=0, checks=None,
+    def __init__(self, getter=None, setter=None, secure_comm=0, checks=None,
                  mapping={}, aliases={}):
-        super(Bool, self).__init__(getter, setter, secur_com, checks, mapping)
+        super(Bool, self).__init__(getter, setter, secure_comm, checks,
+                                   mapping)
         self._aliases = {True: True, False: False}
         if aliases:
             for k in aliases:

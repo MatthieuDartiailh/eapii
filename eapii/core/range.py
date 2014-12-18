@@ -22,6 +22,20 @@ from .unit import get_unit_registry
 class AbstractRangeValidator(object):
     """ Base class for all range validators.
 
+    Attribute
+    ---------
+    minimum :
+        Minimal allowed value or None.
+    maximum :
+        Maximal allowed value or None.
+    step :
+        Allowed step between values or None.
+
+    Methods
+    -------
+    validate :
+        Validate a given value against the range.
+
     """
     __slots__ = ('minimum', 'maximum', 'step', 'validate')
 
@@ -131,6 +145,11 @@ class FloatRangeValidator(AbstractRangeValidator):
         Smallest allowed step
     unit : str, optional
         Unit in which the bounds and step are expressed.
+
+    Attributes
+    ----------
+    unit : Unit or None
+        Unit used when validating.
 
     Methods
     -------

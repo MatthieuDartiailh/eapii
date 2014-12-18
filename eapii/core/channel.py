@@ -38,6 +38,11 @@ class Channel(SubSystem):
     id :
         Id of the channel used by the instrument to correctly route the calls.
 
+    Attributes
+    ----------
+    id :
+        Id of the channel used by the instrument to correctly route the calls.
+
     """
     def __init__(self, parent, id, **kwargs):
         super(Channel, self).__init__(parent, **kwargs)
@@ -45,6 +50,7 @@ class Channel(SubSystem):
 
     @property
     def lock(self):
+        """Access parent lock."""
         return self.parent.lock
 
     def default_get_iproperty(self, iprop, cmd, *args, **kwargs):

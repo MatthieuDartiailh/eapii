@@ -16,7 +16,7 @@ from time import sleep
 
 from ..core.base_instrument import BaseInstrument
 from ..core.errors import InstrIOError
-from .visa import get_visa_ressource_manager, VisaIOError
+from .visa import get_visa_resource_manager, VisaIOError
 from .register import Register
 
 
@@ -35,11 +35,14 @@ class BaseVisaInstrument(BaseInstrument):
                      number can be specified too. NB: for serial (ASRL) do not
                      specify the board use the address entry instead.
             - address : The address of the instrument.
+
         Other entries can be :
             - mode : Mode of connection (INSTR, RAW, SOCKET). If absent INSTR
                      will be assumed.
             - para : a dict to alter the driver attributes.
+
         Those information will be concatenated using ::.
+
     caching_allowed : bool, optionnal
         Boolean use to determine if instrument properties can be cached
     caching_permissions : dict(str : bool), optionnal
@@ -82,7 +85,7 @@ class BaseVisaInstrument(BaseInstrument):
         """Open the VISA session.
 
         """
-        rm = get_visa_ressource_manager()
+        rm = get_visa_resource_manager()
         self.driver = rm.open_ressource(self.connection_str, **self._para)
 
     def close_connection(self):

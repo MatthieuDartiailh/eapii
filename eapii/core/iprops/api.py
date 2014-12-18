@@ -13,5 +13,5 @@ from __future__ import (division, unicode_literals, print_function,
                         absolute_import)
 
 from .i_property import IProperty
-from .mapping import Mapping, Bool
+from .mappings import Mapping, Bool
 from .scalars import Unicode, Int, Float

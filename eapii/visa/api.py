@@ -14,6 +14,6 @@ from __future__ import (division, unicode_literals, print_function,
 
 from .register import Register
 from .visa import get_visa_resource_manager, set_visa_resource_manager
-from .visa_instrs import (BaseVisaInstrument, MessageVisaInstrument,
-                          RegisterVisaInstrument)
+from .visa_instrs import (BaseVisaInstrument, VisaMessageInstrument,
+                          VisaRegisterInstrument)
 from .standards import IEC60488

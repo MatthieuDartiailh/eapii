@@ -112,7 +112,7 @@ class set_iprop_paras(object):
 
     Parameters
     ----------
-    **kwargs :
+    **kwargs
         New keyword arguments to pass to the constructor to alter the IProp.
 
     """
@@ -317,8 +317,12 @@ class HasIProps(with_metaclass(HasIPropsMeta, object)):
     """ Base class for objects using the IProperties mechanisms.
 
     """
-
+    #: Iproperties cacing permissions.
     caching_permissions = {}
+
+    #: Tuple of exception to consider when securing a communication (either via
+    #: secure_communication decorator or for iproperties with a non zero
+    #: secur_comm value)
     secure_com_exceptions = ()
 
     def __init__(self, caching_allowed=True, caching_permissions={}):
@@ -442,7 +446,7 @@ class HasIProps(with_metaclass(HasIPropsMeta, object)):
         ----------
         iprop : unicode
             Name of the IProperty whose behaviour should be overridden.
-        **kwargs :
+        **kwargs
             Attributes of the IProperty to override in the proxy.
 
         """

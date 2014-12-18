@@ -35,8 +35,9 @@ class Register(IProperty):
         determine how many times to retry.
 
     """
-    def __init__(self, getter=None, setter=None, names=(), secure_comm=0):
-        super(Register, self).__init__(getter, setter, secure_comm=secure_comm)
+    def __init__(self, getter=None, setter=None, names=(), checks=None,
+                 secure_comm=0):
+        super(Register, self).__init__(getter, setter, checks, secure_comm)
 
         if isinstance(names, dict):
             aux = list(range(8))
