@@ -22,8 +22,8 @@ from .unit import get_unit_registry
 class AbstractRangeValidator(object):
     """ Base class for all range validators.
 
-    Attribute
-    ---------
+    Attributes
+    ----------
     minimum :
         Minimal allowed value or None.
     maximum :
