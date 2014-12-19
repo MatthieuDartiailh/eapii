@@ -37,7 +37,7 @@ class Register(IProperty):
     """
     def __init__(self, getter=None, setter=None, names=(), checks=None,
                  secure_comm=0):
-        super(Register, self).__init__(getter, setter, checks, secure_comm)
+        super(Register, self).__init__(getter, setter, secure_comm, checks)
 
         if isinstance(names, dict):
             aux = list(range(8))

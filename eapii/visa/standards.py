@@ -55,6 +55,10 @@ class IEC60488(VisaMessageInstrument):
         - `*WAI` - Wait to continue.
 
     """
+    # =========================================================================
+    # --- IProperties
+    # =========================================================================
+
     #: Event register recording the state of the different events.
     event_status = Register('*ESR?', '*ESR {}', names=EVENT_STATUS_BYTE)
 
@@ -66,6 +70,10 @@ class IEC60488(VisaMessageInstrument):
 
     #: Flag signaling all pending operations are completed.
     operation_complete = Bool('*OPC?', mapping={True: '1', False: '0'})
+
+    # =========================================================================
+    # --- Methods
+    # =========================================================================
 
     def get_id(self):
         """Access the instrument identification."""

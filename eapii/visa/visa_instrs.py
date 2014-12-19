@@ -75,8 +75,8 @@ class BaseVisaInstrument(BaseInstrument):
 
         self.connection_str = str(connection_info['type']
                                   + '::' + connection_info['address']
-                                  + '::' + connection_info['additionnal_mode'])
-        self.driver = None
+                                  + '::' + connection_info['mode'])
+        self._driver = None
         self._para = connection_info.get('para', {})
         if auto_open:
             self.open_connection()
@@ -86,14 +86,14 @@ class BaseVisaInstrument(BaseInstrument):
 
         """
         rm = get_visa_resource_manager()
-        self.driver = rm.open_ressource(self.connection_str, **self._para)
+        self._driver = rm.open_resource(self.connection_str, **self._para)
 
     def close_connection(self):
         """Close the VISA session.
 
         """
-        self.driver.close()
-        self.driver = None
+        self._driver.close()
+        self._driver = None
 
     def reopen_connection(self):
         """Close and re-open a suspicious connection.
@@ -104,7 +104,7 @@ class BaseVisaInstrument(BaseInstrument):
         """
         self.close_connection()
         self.open_connection()
-        self.driver.clear()
+        self._driver.clear()
         # Make sure the clear command completed before sending more commands.
         sleep(0.3)
 
@@ -179,7 +179,7 @@ class VisaMessageInstrument(BaseVisaInstrument):
         being passed on to the instrument.
 
         """
-        return self.driver.query(cmd.format(*args, **kwargs))
+        return self._driver.query(cmd.format(*args, **kwargs))
 
     def default_set_iproperty(self, iprop, cmd, *args, **kwargs):
         """Set the iproperty value of the instrument.
@@ -188,7 +188,7 @@ class VisaMessageInstrument(BaseVisaInstrument):
         being passed on to the instrument.
 
         """
-        self.driver.write(cmd.format(*args, **kwargs))
+        self._driver.write(cmd.format(*args, **kwargs))
 
     # --- Pyvisa wrappers -----------------------------------------------------
     @property
@@ -347,4 +347,8 @@ class VisaRegisterInstrument(BaseVisaInstrument):
         """See Pyvisa docs.
 
         """
-        return self.move_out(space, offset, length, data, width, extended)
+        return self._driver.move_out(space, offset, length, data, width,
+                                     extended)
+
+DRIVER_TYPES = {'VisaMessage': VisaMessageInstrument,
+                'VisaRegister': VisaRegisterInstrument}

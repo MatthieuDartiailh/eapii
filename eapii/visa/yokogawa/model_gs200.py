@@ -51,7 +51,7 @@ class YokogawaGS200(IEC60488):
 
     #: State of the output expressed as a boolean.
     output = Bool(':OUTPUT?', ':OUTPUT {}',
-                  mapping={True: 'ON', False: 'OFF'},
+                  mapping={True: '1', False: '0'},
                   aliases={True: ['ON'], False: ['OFF']},
                   secure_comm=2)
 
@@ -88,6 +88,14 @@ class YokogawaGS200(IEC60488):
     # =========================================================================
     # --- Methods
     # =========================================================================
+
+    def __init__(self, connection_info, caching_allowed=True,
+                 caching_permissions={}, auto_open=True):
+        super(YokogawaGS200, self).__init__(connection_info,
+                                            caching_allowed,
+                                            caching_permissions,
+                                            auto_open)
+        self.read_termination = '\n'
 
     def default_check_instr_operation(self, iprop, value, i_value):
         """Check the instrument status byte for errors.

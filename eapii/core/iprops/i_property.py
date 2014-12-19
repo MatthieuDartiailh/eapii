@@ -37,6 +37,7 @@ def get_chain(iprop, instance):
                 continue
             else:
                 raise
+
     alt_val = iprop.post_get(instance, val)
 
     return alt_val
