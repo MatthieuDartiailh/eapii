@@ -150,11 +150,11 @@ def test_overriding_post_set():
 def test_caching_permissions():
 
     class Cache(HasIProps):
-        caching_permissions = {'b': True, 'c': False}
+        caching_permissions = ('b',)
 
     a = Cache(caching_permissions={'a': True})
     assert a._caching_permissions == set(['a', 'b'])
-    assert Cache.caching_permissions == {'b': True, 'c': False}
+    assert Cache.caching_permissions == ('b',)
 
     b = Cache(caching_allowed=False, caching_permissions={'a': True})
     assert b._caching_permissions == set()
@@ -249,15 +249,15 @@ class TestHasIPropsCache(object):
     def setup(self):
 
         class CacheSS(SubSystem):
-            caching_permissions = {'test': True}
+            caching_permissions = ('test',)
             test = IProperty()
 
         class CacheChannel(Channel):
-            caching_permissions = {'aux': True}
+            caching_permissions = ('aux',)
             aux = IProperty()
 
         class CacheTest(HasIPropsTester):
-            caching_permissions = {'test1': True, 'test2': True}
+            caching_permissions = ('test1', 'test2')
             test1 = IProperty()
             test2 = IProperty()
 

@@ -317,8 +317,8 @@ class HasIProps(with_metaclass(HasIPropsMeta, object)):
     """ Base class for objects using the IProperties mechanisms.
 
     """
-    #: Iproperties cacing permissions.
-    caching_permissions = {}
+    #: Tuple of iproperties names which shoulb be cached by default.
+    caching_permissions = ()
 
     #: Tuple of exception to consider when securing a communication (either via
     #: secure_communication decorator or for iproperties with a non zero
@@ -336,7 +336,7 @@ class HasIProps(with_metaclass(HasIPropsMeta, object)):
 
         if caching_allowed:
             # Avoid overriding class attribute
-            perms = self.caching_permissions.copy()
+            perms = {p: True for p in self.caching_permissions}
             perms.update(caching_permissions)
             self._caching_permissions = set([key for key in perms
                                              if isinstance(perms[key], bool)
