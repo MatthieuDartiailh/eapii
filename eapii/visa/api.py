@@ -12,7 +12,6 @@
 from __future__ import (division, unicode_literals, print_function,
                         absolute_import)
 
-from .register import Register
 from .visa import get_visa_resource_manager, set_visa_resource_manager
 from .visa_instrs import (BaseVisaInstrument, VisaMessageInstrument,
                           VisaRegisterInstrument)

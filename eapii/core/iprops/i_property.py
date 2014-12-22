@@ -46,7 +46,6 @@ def get_chain(iprop, instance):
 def set_chain(iprop, instance, value):
     """Generic set chain for IProperties.
 
-
     """
     i_val = iprop.pre_set(instance, value)
     i = -1

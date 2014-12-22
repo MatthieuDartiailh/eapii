@@ -147,3 +147,5 @@ class YokogawaGS200(IEC60488):
             return FloatRangeValidator(-200.0, 200.0, CURR_STEP[val], 'mA')
         else:
             return FloatRangeValidator(-1.2*val, 1.2*val, CURR_STEP[val], 'mA')
+
+DRIVERS = {'YokogawaGS200': YokogawaGS200}

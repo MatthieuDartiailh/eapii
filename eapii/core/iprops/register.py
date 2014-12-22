@@ -13,7 +13,7 @@ from __future__ import (division, unicode_literals, print_function,
                         absolute_import)
 from collections import OrderedDict
 
-from ..core.iprops.i_property import IProperty
+from .i_property import IProperty
 
 
 class Register(IProperty):

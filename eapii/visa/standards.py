@@ -18,8 +18,7 @@ project.
 from __future__ import (division, unicode_literals, print_function,
                         absolute_import)
 from .visa_instrs import VisaMessageInstrument
-from .register import Register
-from ..core.iprops.api import Bool
+from ..core.iprops.api import Bool, Register
 
 
 EVENT_STATUS_BYTE = (

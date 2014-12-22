@@ -13,8 +13,8 @@ from __future__ import (division, unicode_literals, print_function,
                         absolute_import)
 
 from eapii.core.api import set_iprop_paras, FloatRangeValidator
-from eapii.core.iprops.api import Float, Bool, Mapping
-from eapii.visa.api import VisaMessageInstrument, Register
+from eapii.core.iprops.api import Float, Bool, Mapping, Register
+from eapii.visa.api import VisaMessageInstrument
 
 
 VOLT_RANGE = {30.0: 6,
@@ -185,3 +185,5 @@ class Yokogawa7651(VisaMessageInstrument):
             return FloatRangeValidator(-200.0, 200.0, CURR_STEP[val], 'mA')
         else:
             return FloatRangeValidator(-1.2*val, 1.2*val, CURR_STEP[val], 'mA')
+
+DRIVERS = {'Yokogawa7651': Yokogawa7651}

@@ -13,7 +13,7 @@ from __future__ import (division, unicode_literals, print_function,
                         absolute_import)
 from pytest import raises
 
-from eapii.visa.register import Register
+from eapii.core.iprops.register import Register
 
 
 class TestRegister(object):

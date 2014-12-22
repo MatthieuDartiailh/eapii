@@ -15,3 +15,4 @@ from __future__ import (division, unicode_literals, print_function,
 from .i_property import IProperty
 from .mappings import Mapping, Bool
 from .scalars import Unicode, Int, Float
+from .register import Register

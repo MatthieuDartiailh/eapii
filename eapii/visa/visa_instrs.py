@@ -14,10 +14,10 @@ from __future__ import (division, unicode_literals, print_function,
                         absolute_import)
 from time import sleep
 
+from ..core.iprops.register import Register
 from ..core.base_instrument import BaseInstrument
 from ..core.errors import InstrIOError
 from .visa import get_visa_resource_manager, VisaIOError
-from .register import Register
 
 
 class BaseVisaInstrument(BaseInstrument):
