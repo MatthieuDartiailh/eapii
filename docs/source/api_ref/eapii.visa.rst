@@ -22,14 +22,6 @@ eapii.visa.api module
     :undoc-members:
     :show-inheritance:
 
-eapii.visa.register module
---------------------------
-
-.. automodule:: eapii.visa.register
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 eapii.visa.standards module
 ---------------------------
 
