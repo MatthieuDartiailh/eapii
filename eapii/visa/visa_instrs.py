@@ -29,7 +29,7 @@ class BaseVisaInstrument(BaseInstrument):
 
     Parameters
     ----------
-    connection_info : dict
+    connection_infos : dict
         For a VisaInstrument two entries at least are expected:
             - type : The kind of connection (GPIB, USB, PXI, ...). The board
                      number can be specified too. NB: for serial (ASRL) do not
@@ -64,22 +64,31 @@ class BaseVisaInstrument(BaseInstrument):
 
     protocoles = {}
 
-    def __init__(self, connection_info, caching_allowed=True,
+    def __init__(self, connection_infos, caching_allowed=True,
                  caching_permissions={}, auto_open=True):
-        super(BaseVisaInstrument, self).__init__(connection_info,
+        super(BaseVisaInstrument, self).__init__(connection_infos,
                                                  caching_allowed,
                                                  caching_permissions,
                                                  auto_open)
-        if not connection_info.get('mode'):
-            connection_info['mode'] = 'INSTR'
 
-        self.connection_str = str(connection_info['type']
-                                  + '::' + connection_info['address']
-                                  + '::' + connection_info['mode'])
+        self.connection_str = str(connection_infos['type']
+                                  + '::' + connection_infos['address']
+                                  + '::' + connection_infos['mode'])
         self._driver = None
-        self._para = connection_info.get('para', {})
+        self._para = connection_infos.get('para', {})
         if auto_open:
             self.open_connection()
+
+    @classmethod
+    def compute_id(cls, connection_infos):
+        """Insert the default mode in the connection_infos to avoid ambiguity
+        in the id.
+
+        """
+        if not connection_infos.get('mode'):
+            connection_infos['mode'] = 'INSTR'
+
+        super(BaseVisaInstrument, cls).compute_id(connection_infos)
 
     def open_connection(self):
         """Open the VISA session.

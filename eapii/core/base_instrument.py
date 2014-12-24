@@ -34,7 +34,7 @@ class InstrumentSigleton(HasIPropsMeta):
             self._instances_cache = WeakValueDictionary()
 
         cache = self._instances_cache
-        driver_id = frozenset(connection_infos.items())
+        driver_id = self.compute_id(connection_infos)
         if driver_id not in cache:
             dr = super(InstrumentSigleton, self).__call__(connection_infos,
                                                           caching_alowed,
@@ -90,6 +90,23 @@ class BaseInstrument(with_metaclass(InstrumentSigleton, HasIProps)):
         self.owner = ''
         self.newly_created = True
         self.lock = RLock()
+
+    @classmethod
+    def compute_id(connection_infos):
+        """Use the connection infos to compute a unique id for the instrument.
+
+        Parameters
+        ----------
+        connection_infos : dict
+            Connection parameters as passed to the constructor.
+
+        Returns
+        -------
+        id : hashable
+            Unique id identifying the instrument this driver is connected to.
+
+        """
+        return frozenset(connection_infos.items())
 
     def open_connection(self):
         """Open a connection to an instrument.
