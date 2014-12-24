@@ -92,7 +92,7 @@ class BaseInstrument(with_metaclass(InstrumentSigleton, HasIProps)):
         self.lock = RLock()
 
     @classmethod
-    def compute_id(connection_infos):
+    def compute_id(cls, connection_infos):
         """Use the connection infos to compute a unique id for the instrument.
 
         Parameters
