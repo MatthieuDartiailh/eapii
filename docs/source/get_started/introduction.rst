@@ -4,6 +4,8 @@
 Introduction
 ============
 
+.. contents::
+
 Python is a highlevel language with a wide and active community in the world
 of sciences, which makes it a natural choice for interfacing instruments and
 automating experiments. However, most instrument fabricants does not provide

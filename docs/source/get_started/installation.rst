@@ -4,6 +4,8 @@
 Installation
 ============
 
+.. contents::
+
 Installing Eapii is straightforward. It is a pure python package and can be
 installed using pip ::
 
@@ -14,6 +16,15 @@ compatibility and `Pint`_ for unit handling. If you need to communicate with
 instruments through the VISA protocol, you will also need to install `PyVISA`_
 (> 1.6).
 
+In order to run the testsuite you will also need py.test and if you want to
+build the docs you will need sphinx, the sphinx extension napoleon and the
+sphinx Read the docs theme. All can be installed through pip using the
+following commands :
+
+    >>> pip install py.test
+    >>> pip install sphinx
+    >>> pip install spinxcontrib.napoleon
+    >>> pip install sphinx_rtd_theme
 
 .. _future: http://python-future.org/
 .. _Pint: http://pint.readthedocs.org/en

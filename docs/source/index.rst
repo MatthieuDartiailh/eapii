@@ -4,7 +4,7 @@ Welcome to Eapii
 
 Eapii tries to make interfacing instruments easy. It does rely on any particular
 communication format but rather defines a general framework to make easy to
-write drivers with a minimum of code and automating most common operation,
+write drivers with a minimum of code by automating most common operation,
 such as conversion, unit handling and input validation.
 Eapii is tested on Python 2.7 and 3.3+.
 

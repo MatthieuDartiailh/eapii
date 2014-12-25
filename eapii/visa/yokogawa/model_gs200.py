@@ -95,7 +95,11 @@ class YokogawaGS200(IEC60488):
                                             caching_allowed,
                                             caching_permissions,
                                             auto_open)
-        self.read_termination = '\n'
+
+        # Avoid overriding runtime config (even if overriding this would be
+        # stupid).
+        if 'read_termination' not in self._para:
+            self.read_termination = '\n'
 
     def default_check_instr_operation(self, iprop, value, i_value):
         """Check the instrument status byte for errors.

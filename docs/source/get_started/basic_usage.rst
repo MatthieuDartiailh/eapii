@@ -4,10 +4,11 @@
 Basic usage
 ===========
 
+.. contents::
+
 Eapii can be used in large applications or in an interactive prompt. The
 following sections cover the very steps in using Eapii. It apllies to both
 usage.
-
 
 Finding a driver
 ----------------
@@ -66,13 +67,17 @@ the value of the `connected` attribute.
 Unit handling
 -------------
 
-Units are handled using the `Pint` library. All unit definition are stored in
+Units are handled using the `Pint`_ library. All unit definition are stored in
 a unit registry. To access the registry used by Eapii, simply call
-`get_unit_registry` which you can import from eapii.core.api. If you need to
+`get_unit_registry` which you can import from eapii.core.unit. If you need to
 use a special unit registry please look at :ref: `configuration` for how to do
 this.
 
-You can use any compatible unsit when setting a driver IProperty, however the
+`Pint`_ use Quantity to represent a value with its unit, and can perform
+conversion only between Quantities sharing the same unit registry. So if you
+need to use unit you must use the same UnitRegistry as Eapii.
+
+You can use any compatible unit when setting a driver IProperty, however the
 driver will always answer in its base unit. You can easily convert the returned
 value using in the following way :
 
@@ -80,6 +85,14 @@ value using in the following way :
     <<< 0.1 V
     >>> d.voltage.to('mV')
     >>> 10 mV
+
+If you provide a value which is not a pint.Quantity, the driver will interpret
+it as it was in its base unit. You can access the unit used by a Float in the
+following way :
+
+    >>> ip = d.get_iprop('name')
+    >>> ip.unit
+    <<< 'mV'
 
 .. _Pint: http://pint.readthedocs.org/en
 
