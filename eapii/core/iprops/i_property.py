@@ -19,50 +19,6 @@ from functools import update_wrapper
 from ..errors import InstrIOError
 
 
-def get_chain(iprop, instance):
-    """Generic get chain for IProperties.
-
-    """
-    i = -1
-    iprop.pre_get(instance)
-
-    while i < iprop._secur:
-        try:
-            i += 1
-            val = iprop.get(instance)
-            break
-        except instance.secure_com_exceptions:
-            if i != iprop._secur:
-                instance.reopen_connection()
-                continue
-            else:
-                raise
-
-    alt_val = iprop.post_get(instance, val)
-
-    return alt_val
-
-
-def set_chain(iprop, instance, value):
-    """Generic set chain for IProperties.
-
-    """
-    i_val = iprop.pre_set(instance, value)
-    i = -1
-    while i < iprop._secur:
-        try:
-            i += 1
-            iprop.set(instance, i_val)
-            break
-        except instance.secure_com_exceptions:
-            if i != iprop._secur:
-                instance.reopen_connection()
-                continue
-            else:
-                raise
-    iprop.post_set(instance, value, i_val)
-
-
 class IProperty(property):
     """Descriptor representing the most basic instrument property.
 
@@ -124,9 +80,10 @@ class IProperty(property):
         self.creation_kwargs = {'getter': getter, 'setter': setter,
                                 'secure_comm': secure_comm, 'checks': checks}
 
-        super(IProperty, self).__init__(fget=self._get if getter else None,
-                                        fset=self._set if setter else None,
-                                        fdel=self._del)
+        super(IProperty,
+              self).__init__(self._get if getter is not None else None,
+                             self._set if setter is not None else None,
+                             self._del)
         if checks:
             self._build_checkers(checks)
         self.name = ''
@@ -136,6 +93,11 @@ class IProperty(property):
 
         If anything goes wrong this method should raise the corresponding
         error.
+        
+        Parameters
+        ----------
+        instance : HasIProp
+            Instrument or SubSystem object on which this IProperty is defined.
 
         """
         pass
@@ -427,3 +389,47 @@ class IProperty(property):
 
         """
         instance.clear_cache(properties=(self.name,))
+
+         
+def get_chain(iprop, instance):
+    """Generic get chain for IProperties.
+
+    """
+    i = -1
+    iprop.pre_get(instance)
+
+    while i < iprop._secur:
+        try:
+            i += 1
+            val = iprop.get(instance)
+            break
+        except instance.secure_com_exceptions:
+            if i != iprop._secur:
+                instance.reopen_connection()
+                continue
+            else:
+                raise
+
+    alt_val = iprop.post_get(instance, val)
+
+    return alt_val
+
+
+def set_chain(iprop, instance, value):
+    """Generic set chain for IProperties.
+
+    """
+    i_val = iprop.pre_set(instance, value)
+    i = -1
+    while i < iprop._secur:
+        try:
+            i += 1
+            iprop.set(instance, i_val)
+            break
+        except instance.secure_com_exceptions:
+            if i != iprop._secur:
+                instance.reopen_connection()
+                continue
+            else:
+                raise
+    iprop.post_set(instance, value, i_val)

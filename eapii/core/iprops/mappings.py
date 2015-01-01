@@ -6,7 +6,7 @@
 #
 # The full license is in the file LICENCE, distributed with this software.
 #------------------------------------------------------------------------------
-""" Property for scalars values such float, int, string, etc...
+""" Property for values requiring a mapping between user and instrs values.
 
 """
 from __future__ import (division, unicode_literals, print_function,

@@ -5,7 +5,7 @@ Submodules
 ----------
 
 eapii.core.iprops.api module
-----------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. automodule:: eapii.core.iprops.api
     :members:
@@ -13,7 +13,7 @@ eapii.core.iprops.api module
     :show-inheritance:
 
 eapii.core.iprops.i_property module
------------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. automodule:: eapii.core.iprops.i_property
     :members:
@@ -21,7 +21,7 @@ eapii.core.iprops.i_property module
     :show-inheritance:
 
 eapii.core.iprops.mappings module
----------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. automodule:: eapii.core.iprops.mappings
     :members:
@@ -29,7 +29,7 @@ eapii.core.iprops.mappings module
     :show-inheritance:
 
 eapii.core.iprops.proxies module
---------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. automodule:: eapii.core.iprops.proxies
     :members:
@@ -37,18 +37,9 @@ eapii.core.iprops.proxies module
     :show-inheritance:
 
 eapii.core.iprops.scalars module
---------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. automodule:: eapii.core.iprops.scalars
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-
-Module contents
----------------
-
-.. automodule:: eapii.core.iprops
     :members:
     :undoc-members:
     :show-inheritance:

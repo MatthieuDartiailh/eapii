@@ -19,6 +19,18 @@ easy.
 If you write a driver even partial for an instrument please consider
 contribuing it to Eapii.
 
+**Note : **
+In order to Eapii to automatically detect your driver, you should declare a
+module variable `DRIVERS` which should be a dictionary containing the name
+of the instrument as key and the class as value.
+
+.. code-block::
+	
+	class Driver(BaseInstrument):
+		pass
+		
+	DRIVERS = {'Instrument_name': Driver}
+
 .. toctree::
 
     backend_type

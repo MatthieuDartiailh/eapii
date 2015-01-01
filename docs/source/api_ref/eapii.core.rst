@@ -12,7 +12,7 @@ Submodules
 ----------
 
 eapii.core.api module
----------------------
+^^^^^^^^^^^^^^^^^^^^^
 
 .. automodule:: eapii.core.api
     :members:
@@ -20,7 +20,7 @@ eapii.core.api module
     :show-inheritance:
 
 eapii.core.base_instrument module
----------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. automodule:: eapii.core.base_instrument
     :members:
@@ -28,7 +28,7 @@ eapii.core.base_instrument module
     :show-inheritance:
 
 eapii.core.channel module
--------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. automodule:: eapii.core.channel
     :members:
@@ -36,7 +36,7 @@ eapii.core.channel module
     :show-inheritance:
 
 eapii.core.errors module
-------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. automodule:: eapii.core.errors
     :members:
@@ -44,7 +44,7 @@ eapii.core.errors module
     :show-inheritance:
 
 eapii.core.has_i_props module
------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. automodule:: eapii.core.has_i_props
     :members:
@@ -52,7 +52,7 @@ eapii.core.has_i_props module
     :show-inheritance:
 
 eapii.core.range module
------------------------
+^^^^^^^^^^^^^^^^^^^^^^^
 
 .. automodule:: eapii.core.range
     :members:
@@ -60,7 +60,7 @@ eapii.core.range module
     :show-inheritance:
 
 eapii.core.subsystem module
----------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. automodule:: eapii.core.subsystem
     :members:
@@ -68,7 +68,7 @@ eapii.core.subsystem module
     :show-inheritance:
 
 eapii.core.unit module
-----------------------
+^^^^^^^^^^^^^^^^^^^^^^
 
 .. automodule:: eapii.core.unit
     :members:
@@ -76,18 +76,9 @@ eapii.core.unit module
     :show-inheritance:
 
 eapii.core.util module
-----------------------
+^^^^^^^^^^^^^^^^^^^^^^
 
 .. automodule:: eapii.core.util
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-
-Module contents
----------------
-
-.. automodule:: eapii.core
     :members:
     :undoc-members:
     :show-inheritance:

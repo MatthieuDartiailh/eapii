@@ -15,7 +15,7 @@ Submodules
 ----------
 
 eapii.visa.api module
----------------------
+^^^^^^^^^^^^^^^^^^^^^
 
 .. automodule:: eapii.visa.api
     :members:
@@ -23,7 +23,7 @@ eapii.visa.api module
     :show-inheritance:
 
 eapii.visa.standards module
----------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. automodule:: eapii.visa.standards
     :members:
@@ -31,7 +31,7 @@ eapii.visa.standards module
     :show-inheritance:
 
 eapii.visa.visa module
-----------------------
+^^^^^^^^^^^^^^^^^^^^^^
 
 .. automodule:: eapii.visa.visa
     :members:
@@ -39,18 +39,9 @@ eapii.visa.visa module
     :show-inheritance:
 
 eapii.visa.visa_instrs module
------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. automodule:: eapii.visa.visa_instrs
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-
-Module contents
----------------
-
-.. automodule:: eapii.visa
     :members:
     :undoc-members:
     :show-inheritance:

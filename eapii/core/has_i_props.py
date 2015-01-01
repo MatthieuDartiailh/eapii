@@ -98,9 +98,10 @@ def channel_getter_factory(cls, name, ch_cls):
         return self._generic_get_channel(name, ch_cls, ch_id)
 
     f_name = 'get_' + name
-    # In Python 2 needs the cast as we use unicode_litterals
-    channel_getter.__name__ = str(f_name)
-    bind_method(cls, f_name, channel_getter)
+    if not hasattr(cls, f_name):
+        # In Python 2 needs the cast as we use unicode_litterals
+        channel_getter.__name__ = str(f_name)
+        bind_method(cls, f_name, channel_getter)
 
 
 class set_iprop_paras(object):

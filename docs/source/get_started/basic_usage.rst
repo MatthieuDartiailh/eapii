@@ -51,11 +51,11 @@ argument which is a dictionary containing the different informations necessary
 to open the connection to the instrument. Once instantiated the driver is
 automatically connected to the instrument (this behaviout can be moified by
 passing auto_open=False to the constructor). From there you can simply retrieve
-or set the value of the instrument parameters like any other attributes.
+or set the value of the instrument parameters like any other attributes.::
 
     >>> d = Instrument({'address': 1})
     >>> d.value
-    <<< 1
+     1
     >>> d.value = 2
 
 At any moment you can close the connection using `close_connection`, or reopen
@@ -79,22 +79,34 @@ need to use unit you must use the same UnitRegistry as Eapii.
 
 You can use any compatible unit when setting a driver IProperty, however the
 driver will always answer in its base unit. You can easily convert the returned
-value using in the following way :
+value using in the following way ::
 
     >>> d.voltage
-    <<< 0.1 V
+    0.1 V
     >>> d.voltage.to('mV')
     >>> 10 mV
 
 If you provide a value which is not a pint.Quantity, the driver will interpret
 it as it was in its base unit. You can access the unit used by a Float in the
-following way :
+following way ::
 
     >>> ip = d.get_iprop('name')
     >>> ip.unit
-    <<< 'mV'
+    'mV'
 
 .. _Pint: http://pint.readthedocs.org/en
+
+Subsystems and channels
+-----------------------
+
+Subsystems always exists and can be accessed directly through its name.
+Channels on the other hand are identified by an id (whose nature depend on the
+instrument) and must be accessed through the `get_{channel name}` method of the
+driver. This method takes as single argument the id of the channel you are
+trying to access. As usua Eapii makes sure to never creates two channels with
+the same id by returning an already existent one. Drivers also provides a
+method 'list_{channel name}s' taking no argument which, as its name makes clear
+, returns a list of all known channel id for this instrument.
 
 Errors
 ------
