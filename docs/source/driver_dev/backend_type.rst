@@ -9,7 +9,7 @@ Backend type
 The first question you need to answer when writing a new driver is the
 following : How will my computer communicate with my instrument ?
 
-In most cases the answer is simply the VISA protocole (supported over GPIB,
+In most cases the answer is simply the VISA protocol (supported over GPIB,
 USB, Ethernet, etc ...). If this your situation, you can directly go to the
 `Visa`_ section. Other cases can include the following :
 
@@ -28,7 +28,7 @@ Visa
 ----
 
 This is the most common case, at least for major constructors products. Eapii
-supports the use of the VISA protocole through the use of the PyVISA project.
+supports the use of the VISA protocol through the use of the PyVISA project.
 
 Two standards of communication exists within VISA :
 
@@ -52,7 +52,7 @@ private attribute `_driver`. In such a case please consider opening an issue on
 `Eapii`_ issue tracker on Github.
 
 **Note :**
-Visa driver are expected to have a class attribute `protocoles` specifying the
+Visa driver are expected to have a class attribute `protocols` specifying the
 mode to use for each type of connection under the form of a dictionary. This
 allows to easily determine from the command the kind of connection supported
 and its mode (most of the time it is trivial (INSTR) but when a raw socket
@@ -63,40 +63,30 @@ of the instrument) :
 
     class VisaDriver(VisaMessageInstrument):
 
-        protocoles = {'GPIB': 'INSTR', 'TCPIP': '50000::SOCKET'}
+        protocols = {'GPIB': 'INSTR', 'TCPIP': '50000::SOCKET'}
 
 Message based instrument
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-    - encoding :
+Message based visa instrument are the more common ones. In order for 
+communications to work, you must set correctly the termination character
+used for reading and writing (read_termination, write_termination). You can 
+then use the method `write` to  send order to the instrument, the method `read` 
+to read as string the instrument answer, and `query` to write then read.
 
-    - write_termination :
+When you need to retrieve an array of values you can use either 
+read_ascii_values or read_binary_values (or the associated query methods).
 
-    - read_termination :
+**Note :**
+`default_get_iproperty` and `default_set_iproperty` methods are implemented in
+a generic fashion by formatting the get (set) parameter of the iproperty using
+the passed arguments before querying (writing) the instrument.
 
-    - write :
+Look at the :ref: API ref <api_ref>`  for a full description of the available 
+methods and at `PyVISA docs`_ for the full documentation of those methods.
 
-    - write_ascii_values :
 
-    - write_binary_values :
-
-    - write_values :
-
-    - read :
-
-    - read_values :
-
-    - query :
-
-    - query_ascii_values :
-
-    - query_binary_values :
-
-    - query_values :
-
-    - assert_trigger :
-
-    - status_byte :
+.. _PyVISA docs : http://pyvisa.readthedocs.org/en
 
 
 Register based instruments
@@ -115,7 +105,7 @@ C library
 
 Eapii plans to support wrapping external C libraries using CFFI (or ctypes)
 starting at version 0.2. If you need this feature urgently please contact
-the developper.
+the developer.
 
 Native python
 -------------
@@ -125,9 +115,9 @@ ways, so it is hard to give a single recipe. Here are some guidelines :
 
 - the vendor python package should be imported in a single file
 
-- any application wide ressource (such as a server) should be created only when
+- any application wide resource (such as a server) should be created only when
   needed and then cached in a module variable (look at eapii/visa/visa.py
   module for an example).
 
-Feel free to contact the developper or open issue to get support in developping
+Feel free to contact the developer or open issue to get support in developing
 such a driver.

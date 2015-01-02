@@ -6,7 +6,7 @@ Configuration
 
 .. contents::
 
-Eapii has some global settings related to its use of external librairies. Most
+Eapii has some global settings related to its use of external libraries. Most
 of the time the default values should be fine. However if it is not the case
 the following sections describe how to provide custom parameters.
 

@@ -21,10 +21,10 @@ from .visa import get_visa_resource_manager, VisaIOError
 
 
 class BaseVisaInstrument(BaseInstrument):
-    """Base class for instrument communicating throught the VISA protocol.
+    """Base class for instrument communicating through the VISA protocol.
 
     It handles the connection management, but not the subsequent communication.
-    That's why driver should not inheritate from it but from one of its derived
+    That's why driver should not inherit from it but from one of its derived
     class (save for very peculiar use).
 
     Parameters
@@ -43,7 +43,7 @@ class BaseVisaInstrument(BaseInstrument):
 
         Those information will be concatenated using ::.
 
-    caching_allowed : bool, optionnal
+    caching_allowed : bool, optional
         Boolean use to determine if instrument properties can be cached
     caching_permissions : dict(str : bool), optionnal
         Dict specifying which instrument properties can be cached, override the
@@ -54,15 +54,15 @@ class BaseVisaInstrument(BaseInstrument):
 
     Attributes
     ----------
-    protocoles : dict
-        Class attributes used for instrospection purposes, it should specify
+    protocols : dict
+        Class attributes used for introspection purposes, it should specify
         the kind of connection supported by the instrument (GPIB, USB, ...) and
         the mode (INSTR, port::SOCKET, ...)
 
     """
     secure_com_except = (InstrIOError, VisaIOError)
 
-    protocoles = {}
+    protocols = {}
 
     def __init__(self, connection_infos, caching_allowed=True,
                  caching_permissions={}, auto_open=True):

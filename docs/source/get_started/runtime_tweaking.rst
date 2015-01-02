@@ -8,12 +8,12 @@ Runtime tweaking
 
 Default driver behaviours are all encoded in the class definition. However
 as some use cases might require different behaviour Eapii allows to alter those
-default. The two main cases are prsented in the following.
+default. The two main cases are presented in the following.
 
 Caching permissions
 -------------------
 
-To avoid unecessary communications, Eapii cache a number of instruments
+To avoid unnecessary communications, Eapii cache a number of instruments
 parameters by default. If in a particular situation this behaviour is not
 desired, caching can be deactivated by `passing caching_allowed=False` as
 keyword argument to the driver constructor. This will prevent caching any
@@ -33,7 +33,7 @@ IProperty patching
 ------------------
 
 Another way  to alter the runtime behaviour of a driver is to patch an
-IProperty. By patching an iproperty throught the `patch_iprop` method, you can
+IProperty. By patching an iproperty through the `patch_iprop` method, you can
 change any attribute even if the main use is to replace one of the following
 method : pre_get, get, post_get, pre_set, set, post_set. The following syntax
 can be used for a driver, a subsystem or a channel :

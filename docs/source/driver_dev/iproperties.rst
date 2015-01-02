@@ -95,10 +95,80 @@ Implemented iproperties
 Customisation hooks
 ^^^^^^^^^^^^^^^^^^^
 
+The previously mentioned IProperties should cover a majority of use case, but 
+sometimes they won't be sufficient because your instrument is odd. In this case
+you can customize any step of the getting or setting process by creating a
+method on the driver with a name of the form _{step name}_{iprop name} (ex :
+for an iproperty named 'power' you could write a method _pre_set_power).
 
+The arguments are the same that the ones of the IProperty method you are 
+overriding save for the fact that the order of the iproperty and the driver 
+instance are reversed (as it is a method of the driver).
 
+**Note :**
+When you override the behaviour of an IProperty it is your responsibility
+to make sure that the automatic behaviour are still working. Let's say you 
+override the post_get behaviour of an Int, if you still want to get an int
+as the return value you must do the conversion yourself. As you also chose
+the IProperty parameters you know what it should do and as IProperties
+provide methods to do their standard work, it is not too hard to get it right.
+
+Here is a brief list of what each hook is intended to be used for :
+
+- pre_get :
+	Called before attempting to retrieve a value from the instrument. Its main
+	purpose is to run check to validate that the operation makes sense given 
+	the state of the instrument. This is where `checks` get validation happens.
+
+- pre_set :
+	Called before attempting to set the instrument state. It can be used to
+	check the instrument state, or the value validity and to preprocess the 
+	value to make it understandable to the instrument.		
+
+- get :
+	This method should simply retrieve the instrument state and return it. It
+	is not meant to be used for conversions. By default it simply calls the
+	`default_get_iproperty` method of the driver.
+
+- set :
+	This method should simply transmit the order to the instrument. By default 
+	it simply calls the `default_set_iproperty` method of the driver.
+
+- post_get :
+	This method receives the return value from the get method. Its main purpose
+	is to perform conversion to make the instrument answer more user friendly.
+
+- post_set :
+	This method is meant to allow to check that the instrument did perform the
+	expected action. If an issue is detected an exception should be raised. 
+	By default it simply calls the 
+	`default_check_instr_operation` method of the driver.
+
+	
 Ranges
 ------
 
+There is no Range IProperty which may seem strange at first. The reason is 
+actually quite simple : instruments have not a single way to define a range.
+In some cases, it is better to use a float, in other a mapping perhaps.
+However one common need it to be able to check that a value is valid for the 
+instrument ins its current state.
 
+Eapii tackles this issue by allowing the user to declare a range validator 
+for an IProperty (Int or Float). This validator can either be declared
+statically using one of the class found in :py:mod:`eapii.core.range` or using
+a  string. The first option makes sense for hardware limitations, the second
+for value depending on some setting of the instrument. 
 
+Eapii tries to do a lot of magic for you but it cannot guess a range from only
+a string. Actually for each range you want to use (whose name can match an
+existing IProperty), you must define a _range_{range name} method which must
+return the range validator.
+
+For efficiency range validators are cached. They can be retrieved using the
+:py:meth:`get_range <eapii.core.has_i_props.HasIProps.get_range>` method and
+cleared using the 
+py:meth:`discard_range <eapii.core.has_i_props.HasIProps.discard_range` 
+method. For every IProperty invalidating a range you must discard it in the
+post_set method of that IProperty (for the time being no automatic way is 
+provided to do so you must write a custom _post_set_* method).

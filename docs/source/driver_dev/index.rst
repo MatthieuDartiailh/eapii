@@ -17,14 +17,14 @@ working of the iproperties and how to use them at their best to make your life
 easy.
 
 If you write a driver even partial for an instrument please consider
-contribuing it to Eapii.
+contributing it to Eapii.
 
-**Note : **
+**Note :**
 In order to Eapii to automatically detect your driver, you should declare a
 module variable `DRIVERS` which should be a dictionary containing the name
 of the instrument as key and the class as value.
 
-.. code-block::
+.. code-block:: python
 	
 	class Driver(BaseInstrument):
 		pass

@@ -27,7 +27,7 @@ Subsystems
 ----------
 
 As mentioned earlier subsystems can be used to break a complex driver in more
-mangeable parts. And this as many times as needed as subsystems can have
+manageable parts. And this as many times as needed as subsystems can have
 subsystems and even channels.
 
 When writing a subsystem it should inherit from the Subsystem base class, in
@@ -62,7 +62,7 @@ the driver multiple instances can exist, each having a different id (stored in
 the `ch_id` attribute of the channel). You can declare your channel just as
 your driver and Eapii will take care of creating the `get_{channel name}`
 method for you. You can if you need to write this method yourself but be sure
-to properly cache the already created channels to avoid duplicatas. However
+to properly cache the already created channels to avoid duplicates. However
 you do need to write a method `list_{channel name}s` taking no argument and
 returning the list of available channels.
 

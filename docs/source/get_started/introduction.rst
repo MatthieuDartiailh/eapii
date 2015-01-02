@@ -31,12 +31,12 @@ delegate the burden of the actual communication with the instrument to others.
 For example the VISA protocol is supported through the use of the excellent
 PyVISA project.
 
-Eapii design is centered around two keypoints :
+Eapii design is centred around two key points :
 - the use of smart properties (IProperties) to give an easy, powerful and
 natural access to the instrument parameters.
 - the possibility to split a driver in multiple subsystems for clarity sake but
 also because most complex instruments have a notion of channel that Eapii
-supports nativeky.
+supports natively.
 
 IProperties
 -----------
@@ -50,7 +50,7 @@ method). Setting a value follow a similar patten : the value is first converted
 to an instrument representation (pre_set method), the value is then sent to the
 instrument(set method), and finally the operation success is asserted (post_set
 method). Any Iproperty can be marked for caching in which case the cache state
-is checked before calling any of the previously mentionned methods.
+is checked before calling any of the previously mentioned methods.
 
 Brief descriptions of the different IProperties subclasses and their default
 behaviours :
@@ -76,7 +76,7 @@ behaviours :
 
 - Mapping:
     IProperty using a dictionary to map user input to instrument understandable
-    values. This is most useful when an instrument use interger values to
+    values. This is most useful when an instrument use integer values to
     specify a mode as the user don't need to know the meaning of the integer
     values and can simply work with the name of the mode.
 
@@ -87,7 +87,7 @@ behaviours :
 
 - Register:
     A special kind of mapping to handle single byte answers. In this case the
-    mapping is used to interprete the meaning of each bit.
+    mapping is used to interpret the meaning of each bit.
 
 **Notes**:
 You can find more detailed informations about IProperties uses and internals in
@@ -107,10 +107,10 @@ can either be only logical or refers to some hardware reality.
 
 - Channels:
     Channels are very similar to subsystem in that they also pipes their
-    commands to their parent, however contrary to subsystem mutiple channels
+    commands to their parent, however contrary to subsystem multiple channels
     of the same type can exist for the same driver. This is possible because
     a channel has an ID which is used to identify it and send the command to
-    the right part of the instrument. Eapii automatically makes sures that only
+    the right part of the instrument. Eapii automatically makes sure that only
     one channel is created per ID. To access a channel simply call the
     get_*channel name* method with the ID of the channel.
 
@@ -118,7 +118,7 @@ Caching safety and thread safety
 --------------------------------
 
 Eapii offers the possibility to cache a number of instruments parameters to
-tries to limitate the actual communication with the instruement. As this is
+tries to limit the actual communication with the instrument. As this is
 likely (and could even be dangerous) to generate a lot of confusion if multiple
 drivers access to the same instrument, Eapii enforces the unicity of the
 driver based on the communication information. This could produce unexpected

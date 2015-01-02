@@ -7,11 +7,12 @@ Installation
 .. contents::
 
 Installing Eapii is straightforward. It is a pure python package and can be
-installed using pip ::
+installed using pip (NB : for the time being there is no PyPI package so you
+must get a copy from github see using_dev_)::
 
 $ pip install eapii
 
-It has two single manadatory dependencies : `future`_ for Python2/3
+It has two single mandatory dependencies : `future`_ for Python2/3
 compatibility and `Pint`_ for unit handling. If you need to communicate with
 instruments through the VISA protocol, you will also need to install `PyVISA`_
 (> 1.6).
@@ -48,6 +49,7 @@ fails, feel free to open an issue in our `issue_tracker`_.
 
 .. _issue_tracker: http://github.com/MatthieuDartiailh/eapii/issues
 
+.. _using_dev:
 
 Using the development version
 -----------------------------

@@ -7,15 +7,15 @@ Basic usage
 .. contents::
 
 Eapii can be used in large applications or in an interactive prompt. The
-following sections cover the very steps in using Eapii. It apllies to both
+following sections cover the very steps in using Eapii. It applies to both
 usage.
 
 Finding a driver
 ----------------
 
-Eapii has some introspection capabalities allowing to automatically discovers
+Eapii has some introspection capabilities allowing to automatically discovers
 and lists the known drivers and driver types. (NB : a driver type refers to
-a genric kind of driver defining how the communication with the instrument is
+a generic kind of driver defining how the communication with the instrument is
 done).
 
 The functions needed are located in the eapii.explore module :
@@ -49,7 +49,7 @@ Opening the connection
 Every driver, independently of its type, expects on instantiation at least one
 argument which is a dictionary containing the different informations necessary
 to open the connection to the instrument. Once instantiated the driver is
-automatically connected to the instrument (this behaviout can be moified by
+automatically connected to the instrument (this behaviour can be modified by
 passing auto_open=False to the constructor). From there you can simply retrieve
 or set the value of the instrument parameters like any other attributes.::
 
@@ -103,7 +103,7 @@ Subsystems always exists and can be accessed directly through its name.
 Channels on the other hand are identified by an id (whose nature depend on the
 instrument) and must be accessed through the `get_{channel name}` method of the
 driver. This method takes as single argument the id of the channel you are
-trying to access. As usua Eapii makes sure to never creates two channels with
+trying to access. As usual Eapii makes sure to never creates two channels with
 the same id by returning an already existent one. Drivers also provides a
 method 'list_{channel name}s' taking no argument which, as its name makes clear
 , returns a list of all known channel id for this instrument.
